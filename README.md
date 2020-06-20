@@ -27,10 +27,9 @@ Install dependencies...
  * libqt4-dev  
 
 To build this program, extract the source code zip.  
-Open terminal and change directory to src/  
 Then run these commands to compile...  
 ```
-qmake  
+qmake src  
 make -j4  
 ```
 
@@ -49,9 +48,9 @@ To uninstall, run ...
 ### Build (Windows)
 Download Qt 4.8.7 and minGW32  
 add Qt/4.8.7/bin directory and mingw32/bin directory in PATH environment variable.  
-In src directory open Command Line.  
+Open Command Line.  
 Run command...  
-`qmake`  
+`qmake` src  
 `make -j4`  
 
 You can download the precompiled windows exe package in the [release page](https://github.com/ksharindam/photoquick/releases).  

@@ -13,6 +13,32 @@ This file is a part of photoquick program, which is GPLv3 licensed
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+QPoint meanx2(QPoint p1, QPoint p2, QPoint p3, QPoint p4)
+{
+    float mx, my;
+    mx = 0.25f * (float)(p1.x() + p2.x() + p3.x() + p4.x());
+    my = 0.25f * (float)(p1.y() + p2.y() + p3.y() + p4.y());
+    return QPoint((int)(mx + 0.5f), (int)(my + 0.5f));
+}
+QPoint stdevx2(QPoint p1, QPoint p2, QPoint p3, QPoint p4)
+{
+    float mx, my, sx, sy;
+    float dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4;
+    mx = 0.25f * (float)(p1.x() + p2.x() + p3.x() + p4.x());
+    my = 0.25f * (float)(p1.y() + p2.y() + p3.y() + p4.y());
+    dx1 = mx - (float)p1.x();
+    dx2 = mx - (float)p2.x();
+    dx3 = mx - (float)p3.x();
+    dx4 = mx - (float)p4.x();
+    sx = sqrtf(dx1 * dx1 + dx2 * dx2 + dx3 * dx3 + dx4 * dx4) * 0.5f;
+    dy1 = my - (float)p1.y();
+    dy2 = my - (float)p2.y();
+    dy3 = my - (float)p3.y();
+    dy4 = my - (float)p4.y();
+    sy = sqrtf(dy1 * dy1 + dy2 * dy2 + dy3 * dy3 + dy4 * dy4) * 0.5f;
+    return QPoint((int)(sx + 0.5f), (int)(sy + 0.5f));
+}
+
 // ******************************************************************* |
 //                         Crop Manager
 // ------------------------------------------------------------------- |
@@ -434,23 +460,28 @@ PerspectiveTransform:: drawCropBox()
 void
 PerspectiveTransform:: transform()
 {
+    QPoint mxy;
+    QPoint sxy;
+    int min_w, min_h, max_w, max_h;
     p1 = QPoint(p1.x()/scaleX, p1.y()/scaleY);
     p2 = QPoint(p2.x()/scaleX, p2.y()/scaleY);
     p3 = QPoint(p3.x()/scaleX, p3.y()/scaleY);
     p4 = QPoint(p4.x()/scaleX, p4.y()/scaleY);
-    int max_w = MAX(p2.x()-p1.x(), p4.x()-p3.x());
-    int max_h = MAX(p3.y()-p1.y(), p4.y()-p2.y());
+    mxy = meanx2(p1, p2, p3, p4);
+    sxy = stdevx2(p1, p2, p3, p4);
+    min_w = mxy.x() - sxy.x();
+    min_h = mxy.y() - sxy.y();
+    max_w = mxy.x() + sxy.x();
+    max_h = mxy.y() + sxy.y();
     QPolygonF mapFrom;
     mapFrom << p1<< p2<< p3<< p4;
     QPolygonF mapTo;
-    mapTo << QPointF(0,0)<< QPointF(max_w,0)<< QPointF(0,max_h)<< QPointF(max_w,max_h);
+    mapTo << QPointF(min_w,min_h)<< QPointF(max_w,min_h)<< QPointF(min_w,max_h)<< QPointF(max_w,max_h);
     QTransform tfm;
     QTransform::quadToQuad(mapFrom, mapTo, tfm);
     QImage img = canvas->image.transformed(tfm, Qt::SmoothTransformation);
     QTransform trueMtx = QImage::trueMatrix(tfm,canvas->image.width(),canvas->image.height());
-    topleft = trueMtx.map(p1);
-    btmright = trueMtx.map(p4);
-    canvas->image = img.copy(QRect(topleft, btmright));
+    canvas->image = img;
     finish();
 }
 
