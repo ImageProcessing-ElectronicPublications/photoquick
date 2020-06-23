@@ -1147,7 +1147,7 @@ void pencilSketch(QImage &img)
 
 // ********************** Bimodal Threshold *********************
 
-int histogram_darkest(unsigned int hist[])
+int histogram_darkest(long long hist[])
 {
     for (int i=0; i<256; i++) {
         if (hist[i]!=0)
@@ -1155,7 +1155,7 @@ int histogram_darkest(unsigned int hist[])
     }
     return 255;
 }
-int histogram_lightest(unsigned int hist[])
+int histogram_lightest(long long hist[])
 {
     for (int i=255; i>0; i--) {
         if (hist[i]!=0)
@@ -1164,7 +1164,7 @@ int histogram_lightest(unsigned int hist[])
     return 0;
 }
 
-float threshold_bimod(unsigned int hist[], int tsize, float tpart) {
+float threshold_bimod(long long hist[], int tsize, float tpart) {
     float T = tsize * tpart;
     float Tn = 0;
     while (T != Tn) {
@@ -1192,7 +1192,7 @@ float threshold_bimod(unsigned int hist[], int tsize, float tpart) {
 }
 
 // get threshold values for a single channel
-void thresholdBimodChannel(uint hist[], int thresval[], int tcount, int tdelta, bool median)
+void thresholdBimodChannel(long long hist[], int thresval[], int tcount, int tdelta, bool median)
 {
     int thres[256] = {-1}; //tcount+1 for c++11 compiler
 
@@ -1229,7 +1229,7 @@ void thresholdBimod(QImage &img, int tcount, int tdelta, bool median)
     int imgW = img.width();
     int imgH = img.height();
     // Calc Histogram
-    unsigned int hist[3][256] = {};
+    long long hist[3][256] = {};
     for (int y=0; y<imgH; y++)
     {
         QRgb *row = (QRgb*)img.constScanLine(y);
