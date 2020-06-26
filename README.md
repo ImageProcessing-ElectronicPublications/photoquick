@@ -27,10 +27,10 @@ Install dependencies...
  * libqt4-dev  
 
 To build this program, extract the source code zip.  
-Open terminal  
+Open terminal and change directory to src/  
 Then run these commands to compile...  
 ```
-qmake src  
+qmake  
 make -j4  
 ```
 
