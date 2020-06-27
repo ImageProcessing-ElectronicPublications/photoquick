@@ -3,6 +3,7 @@
 #include "ui_resize_dialog.h"
 #include <QStatusBar>
 #include <QDoubleSpinBox>
+#include <QCheckBox>
 
 typedef enum {
     NO_RATIO,
@@ -69,7 +70,7 @@ public:
     QStatusBar *statusbar;
 private:
     QPixmap pixmap;
-    bool mouse_pressed;
+    bool mouse_pressed, fisometric;
     QPoint topleft, topright, btmleft, btmright, clk_pos, p1,p2,p3,p4;
     int clk_area;
     float scaleX, scaleY;
@@ -79,6 +80,7 @@ private slots:
     void onMousePress(QPoint pos);
     void onMouseRelease(QPoint pos);
     void onMouseMove(QPoint pos);
+    void isomode();
     void transform();
     void finish();
 signals:
