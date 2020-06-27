@@ -57,16 +57,8 @@ Run command...
 You can download the precompiled windows exe package in the [release page](https://github.com/ksharindam/photoquick/releases).  
 
 ### Plugins
-**Build (Linux and Windows) :**  
-Open terminal or command line in project root directory.  
-Then run these commands to compile...  
-```
-cd plugins  
-qmake  
-make -j4  
-```  
-**Install (Linux) :**  
-`sudo make install`  
+This program supports plugins. You can get a set of plugins
+[here](https://github.com/ImageProcessing-ElectronicPublications/photoquick-plugins).   Also you can build your own plugins and use with it.  
 
 ### Usage
 To run this program...  
