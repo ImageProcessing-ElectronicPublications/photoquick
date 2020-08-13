@@ -50,8 +50,8 @@ Crop:: Crop(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
     mouse_pressed = false;
     canvas->drag_to_scroll = false;
     pixmap = canvas->pixmap()->copy();
-    scaleX = float(pixmap.width())/canvas->image.width();
-    scaleY = float(pixmap.height())/canvas->image.height();
+    scaleX = float(pixmap.width())/canvas->data->image.width();
+    scaleY = float(pixmap.height())/canvas->data->image.height();
     topleft = QPoint(0,0);
     btmright = QPoint(pixmap.width()-1, pixmap.height()-1);
     p1 = QPoint(topleft);   // temporary topleft point
@@ -131,7 +131,7 @@ Crop:: onMouseMove(QPoint pos)
     if (not mouse_pressed) return;
     QPoint moved = pos - clk_pos;
     QPoint last_pt = QPoint(pixmap.width()-1, pixmap.height()-1);
-    float imgAspect = float(canvas->image.width())/canvas->image.height();
+    float imgAspect = float(canvas->data->image.width())/canvas->data->image.height();
     float boxAspect = ratio_w/ratio_h;
     switch (clk_area) {
     case 1 : { // Top left corner is clicked
@@ -210,8 +210,8 @@ Crop:: crop()
         w = round((btmright.x()-topleft.x()+1)/scaleX);
         h = round((btmright.y()-topleft.y()+1)/scaleY);
     }
-    QImage img = canvas->image.copy(round(topleft.x()/scaleX), round(topleft.y()/scaleY), w, h);
-    canvas->image = img;
+    QImage img = canvas->data->image.copy(round(topleft.x()/scaleX), round(topleft.y()/scaleY), w, h);
+    canvas->data->image = img;
     finish();
 }
 
@@ -234,7 +234,7 @@ void
 Crop:: setCropMode(QAction *action)
 {
     if (action->text()==QString("Fixed Resolution")) {
-        CropResolutionDialog *res_dlg = new CropResolutionDialog(canvas,canvas->image.width(),canvas->image.height());
+        CropResolutionDialog *res_dlg = new CropResolutionDialog(canvas,canvas->data->image.width(),canvas->data->image.height());
         res_dlg->exec();
         fixed_width = res_dlg->widthSpin->value();
         fixed_height = res_dlg->heightSpin->value();
@@ -355,8 +355,8 @@ PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
     fisometric = false;
     canvas->drag_to_scroll = false;
     pixmap = canvas->pixmap()->copy();
-    scaleX = float(pixmap.width())/canvas->image.width();
-    scaleY = float(pixmap.height())/canvas->image.height();
+    scaleX = float(pixmap.width())/canvas->data->image.width();
+    scaleY = float(pixmap.height())/canvas->data->image.height();
     p1 = topleft = QPoint(0,0);
     p2 = topright = QPoint(pixmap.width()-1, 0);
     p3 = btmleft = QPoint(0, pixmap.height()-1);
@@ -501,17 +501,17 @@ PerspectiveTransform:: transform()
     mapTo << QPointF(min_w,min_h)<< QPointF(max_w,min_h)<< QPointF(min_w,max_h)<< QPointF(max_w,max_h);
     QTransform tfm;
     QTransform::quadToQuad(mapFrom, mapTo, tfm);
-    QImage img = canvas->image.transformed(tfm, Qt::SmoothTransformation);
-    QTransform trueMtx = QImage::trueMatrix(tfm,canvas->image.width(),canvas->image.height());
+    QImage img = canvas->data->image.transformed(tfm, Qt::SmoothTransformation);
+    QTransform trueMtx = QImage::trueMatrix(tfm,canvas->data->image.width(),canvas->data->image.height());
     if (fisometric)
     {
-        canvas->image = img;
+        canvas->data->image = img;
     }
     else
     {
         topleft = trueMtx.map(p1);
         btmright = trueMtx.map(p4);
-        canvas->image = img.copy(QRect(topleft, btmright));
+        canvas->data->image = img.copy(QRect(topleft, btmright));
     }
     finish();
 }
