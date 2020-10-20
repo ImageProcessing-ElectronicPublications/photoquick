@@ -71,3 +71,12 @@ To open image.jpg with it...
 Reload Image : R  
 Delete Image : Delete  
 
+### Supported Image Formats
+All formats supported by Qt are supported in this program.  
+**Read :** JPG, PNG, GIF, SVG, TIFF, ICO, BMP, XPM, XBM, PPM, PBM, PGM  
+**Write :** JPG, PNG, TIFF, ICO, BMP, XPM, XBM, PPM  
+
+JPEG2000 and WebP formats are supported via image format plugins.  
+You can get these here...  
+https://github.com/ksharindam/qt4-imageformat-plugins  
+
