@@ -570,12 +570,17 @@ void calcArc(QPoint p/*center*/, QPoint p1, QPoint p2, QPoint p3,
 // ResizeDialog object to get required image size
 ResizeDialog:: ResizeDialog(QWidget *parent, int img_width, int img_height) : QDialog(parent)
 {
+    QString whstr;
     setupUi(this);
     frame->hide();
     resize(350, 100);
     QIntValidator validator(this);
     widthEdit->setValidator(&validator);
     heightEdit->setValidator(&validator);
+    whstr.setNum(img_width);
+    widthEdit->setText(whstr);
+    whstr.setNum(img_height);
+    heightEdit->setText(whstr);
     spinWidth->setValue(img_width*2.54/300);
     spinHeight->setValue(img_height*2.54/300);
     QObject::connect(checkBox, SIGNAL(toggled(bool)), this, SLOT(toggleAdvanced(bool)));
