@@ -570,19 +570,20 @@ void calcArc(QPoint p/*center*/, QPoint p1, QPoint p2, QPoint p3,
 // ResizeDialog object to get required image size
 ResizeDialog:: ResizeDialog(QWidget *parent, int img_width, int img_height) : QDialog(parent)
 {
-    QString whstr;
     setupUi(this);
     frame->hide();
     resize(350, 100);
     QIntValidator validator(this);
     widthEdit->setValidator(&validator);
     heightEdit->setValidator(&validator);
-    whstr.setNum(img_width);
-    widthEdit->setText(whstr);
-    whstr.setNum(img_height);
-    heightEdit->setText(whstr);
+    ratioEdit->setValidator(&validator);
+    orig_width = img_width;
+    orig_height = img_height;
+    widthEdit->setText( QString::number(img_width));
+    heightEdit->setText( QString::number(img_height));
     spinWidth->setValue(img_width*2.54/300);
     spinHeight->setValue(img_height*2.54/300);
+    QObject::connect(ratioEdit, SIGNAL(editingFinished()), this, SLOT(ratioTextChanged()));
     QObject::connect(checkBox, SIGNAL(toggled(bool)), this, SLOT(toggleAdvanced(bool)));
     QObject::connect(spinWidth, SIGNAL(valueChanged(double)), this, SLOT(onValueChange(double)));
     QObject::connect(spinHeight, SIGNAL(valueChanged(double)), this, SLOT(onValueChange(double)));
@@ -608,4 +609,18 @@ ResizeDialog:: onValueChange(int)
     int DPI = spinDPI->value();
     widthEdit->setText( QString::number(round(DPI * spinWidth->value()/2.54)));
     heightEdit->setText( QString::number(round(DPI * spinHeight->value()/2.54)));
+}
+
+void
+ResizeDialog:: ratioTextChanged()
+{
+    double ratio = ratioEdit->text().toDouble();
+    if (ratio > 0.0)
+    {
+        widthEdit->setText( QString::number(round(ratio * orig_width)));
+        heightEdit->setText( QString::number(round(ratio * orig_height)));
+    } else {
+        widthEdit->setText( QString::number(round(orig_width)));
+        heightEdit->setText( QString::number(round(orig_height)));
+    }
 }

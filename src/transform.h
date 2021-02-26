@@ -99,9 +99,11 @@ class ResizeDialog : public QDialog, public Ui_ResizeDialog
     Q_OBJECT
 public:
     ResizeDialog(QWidget *parent, int img_width, int img_height);
+    int orig_width, orig_height;
 public slots:
     void toggleAdvanced(bool checked);
     void onValueChange(int value);
     void onValueChange(double value) {onValueChange(int(value));}
+    void ratioTextChanged();
 };
 
