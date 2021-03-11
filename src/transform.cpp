@@ -577,10 +577,12 @@ ResizeDialog:: ResizeDialog(QWidget *parent, int img_width, int img_height) : QD
     widthEdit->setValidator(&validator);
     heightEdit->setValidator(&validator);
     ratioEdit->setValidator(&validator);
+    multRIS->setValidator(&validator);
     orig_width = img_width;
     orig_height = img_height;
     widthEdit->setText( QString::number(img_width));
     heightEdit->setText( QString::number(img_height));
+    multRIS->setText( QString::number(1.0));
     spinWidth->setValue(img_width*2.54/300);
     spinHeight->setValue(img_height*2.54/300);
     QObject::connect(ratioEdit, SIGNAL(editingFinished()), this, SLOT(ratioTextChanged()));

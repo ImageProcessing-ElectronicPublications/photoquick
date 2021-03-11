@@ -30,3 +30,7 @@ unix {
     target.path = /usr/local/bin
 }
 
+win32 {
+    RC_FILE += photoquick_resource.rc
+    OTHER_FILES += photoquick_resource.rc
+}

@@ -543,24 +543,71 @@ Window:: reloadImage()
     openImage(data.filename);
 }
 
+QImage Window:: reFilter(QImage imgre, QImage img0, float mult)
+{
+    int width, height, width0, height0, x, y, clr, clrre, r, g, b;
+    width = imgre.width();
+    height = imgre.height();
+    width0 = img0.width();
+    height0 = img0.height();
+    if ((width == width0) && (height == height0))
+    { 
+        for (y = 0; y < height; y++)
+        {
+            QRgb *row0 = (QRgb*) img0.scanLine(y);
+            QRgb *rowre = (QRgb*) imgre.scanLine(y);
+            for (x = 0; x < width; x++)
+            {
+                clr = row0[x];
+                clrre = rowre[x];
+                r = qRed(clr) + (int)(mult * (qRed(clr) - qRed(clrre)));
+                g = qGreen(clr) + (int)(mult * (qGreen(clr) - qGreen(clrre)));
+                b = qBlue(clr) + (int)(mult * (qBlue(clr) - qBlue(clrre)));
+                r = (r < 0) ? 0 : ((r > 255) ? 255 : r);
+                g = (g < 0) ? 0 : ((g > 255) ? 255 : g);
+                b = (b < 0) ? 0 : ((b > 255) ? 255 : b);
+                rowre[x] = qRgb(r, g, b);
+            }
+        }
+    }
+    return imgre;
+}
+
 void
 Window:: resizeImage()
 {
     ResizeDialog *dialog = new ResizeDialog(this, data.image.width(), data.image.height());
     if (dialog->exec() == 1) {
         QImage img;
+        int nwidth, nheight, owidth, oheight;
         Qt::TransformationMode tfmMode = dialog->smoothScaling->isChecked() ?
                         Qt::SmoothTransformation : Qt::FastTransformation;
+        owidth = data.image.width();
+        oheight = data.image.height();
         QString img_width = dialog->widthEdit->text();
         QString img_height = dialog->heightEdit->text();
-        if ( !img_width.isEmpty() and !img_height.isEmpty() )
-            img = data.image.scaled(img_width.toInt(), img_height.toInt(), Qt::IgnoreAspectRatio, tfmMode);
-        else if (not img_width.isEmpty())
-            img = data.image.scaledToWidth(img_width.toInt(), tfmMode);
-        else if (not img_height.isEmpty())
-            img = data.image.scaledToHeight(img_height.toInt(), tfmMode);
+        nwidth = (img_width.isEmpty()) ? 0 : img_width.toInt();
+        nheight = (img_height.isEmpty()) ? 0 : img_height.toInt();
+        if (nwidth < 1 and nheight < 1) return;
+        if (nheight < 1)
+            img = data.image.scaledToWidth(nwidth, tfmMode);
+        else if (nwidth < 1)
+            img = data.image.scaledToHeight(nheight, tfmMode);
         else
-            return;
+            img = data.image.scaled(nwidth, nheight, Qt::IgnoreAspectRatio, tfmMode);
+        if (dialog->checkRIS->isChecked())
+        {
+            QString multRIS = dialog->multRIS->text();
+            float mult = (multRIS.isEmpty()) ? 0 : multRIS.toFloat();
+            QImage imgb = img.scaled(owidth, oheight, Qt::IgnoreAspectRatio, tfmMode);
+            imgb = reFilter(imgb, data.image, mult);
+            if (nheight < 1)
+                img = imgb.scaledToWidth(nwidth, tfmMode);
+            else if (nwidth < 1)
+                img = imgb.scaledToHeight(nheight, tfmMode);
+            else
+                img = imgb.scaled(nwidth, nheight, Qt::IgnoreAspectRatio, tfmMode);
+        }
         canvas->setImage(img);
     }
 }
@@ -1090,7 +1137,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("photoquick");
 #ifdef _WIN32
     // this is needed to load imageformat plugins
-	app.addLibraryPath(app.applicationDirPath());
+    app.addLibraryPath(app.applicationDirPath());
 #endif
     Window *win = new Window();
     win->show();

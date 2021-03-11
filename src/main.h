@@ -12,6 +12,7 @@ public:
     void openImage(QString filename);
     void saveImage(QString filename);
     void adjustWindowSize(bool animation=false);
+    QImage reFilter(QImage imgre, QImage img0, float mult);
     //Variables declaration
     Canvas *canvas;
     ImageData data;
