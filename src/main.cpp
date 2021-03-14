@@ -545,13 +545,13 @@ Window:: reloadImage()
 
 QImage Window:: reFilter(QImage imgre, QImage img0, float mult)
 {
-    int width, height, width0, height0, x, y, clr, clrre, r, g, b;
+    int width, height, width0, height0, x, y, clr, clrre, r, g, b, a;
     width = imgre.width();
     height = imgre.height();
     width0 = img0.width();
     height0 = img0.height();
     if ((width == width0) && (height == height0))
-    { 
+    {
         for (y = 0; y < height; y++)
         {
             QRgb *row0 = (QRgb*) img0.scanLine(y);
@@ -566,11 +566,18 @@ QImage Window:: reFilter(QImage imgre, QImage img0, float mult)
                 r = (r < 0) ? 0 : ((r > 255) ? 255 : r);
                 g = (g < 0) ? 0 : ((g > 255) ? 255 : g);
                 b = (b < 0) ? 0 : ((b > 255) ? 255 : b);
-                rowre[x] = qRgb(r, g, b);
+                if (img0.hasAlphaChannel())
+                {
+                    a = qAlpha(clr) + (int)(mult * (qAlpha(clr) - qAlpha(clrre)));
+                    a = (a < 0) ? 0 : ((a > 255) ? 255 : a);
+                    row0[x] = qRgba(r, g, b, a);
+                } else {
+                    row0[x] = qRgb(r, g, b);
+                }
             }
         }
     }
-    return imgre;
+    return img0;
 }
 
 void
@@ -768,9 +775,17 @@ Window:: blur()
 {
     bool ok;
     int radius = QInputDialog::getInt(this, "Blur Radius", "Enter Blur Radius :",
-                                        1/*val*/, 1/*min*/, 30/*max*/, 1/*step*/, &ok);
-    if (not ok) return;
-    gaussianBlur(data.image, radius);
+                                        1/*val*/, -30/*min*/, 30/*max*/, 1/*step*/, &ok);
+    if ((not ok) || (radius == 0)) return;
+    if (radius < 0)
+    {
+        QImage imgb = data.image.copy();
+        gaussianBlur(imgb, -radius);
+        imgb = reFilter(imgb, data.image, 1.0f);
+        data.image = imgb;
+    } else {
+        gaussianBlur(data.image, radius);
+    }
     //boxFilter(data.image, radius);
     canvas->showScaled();
 }

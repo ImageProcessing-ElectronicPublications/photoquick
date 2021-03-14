@@ -616,13 +616,18 @@ ResizeDialog:: onValueChange(int)
 void
 ResizeDialog:: ratioTextChanged()
 {
-    double ratio = ratioEdit->text().toDouble();
-    if (ratio > 0.0)
+    float ratio = ratioEdit->text().toDouble();
+    float dr = (ratio > orig_ratio) ? (ratio - orig_ratio) : (orig_ratio - ratio);
+    if (dr > 0.0)
     {
-        widthEdit->setText( QString::number(round(ratio * orig_width)));
-        heightEdit->setText( QString::number(round(ratio * orig_height)));
-    } else {
-        widthEdit->setText( QString::number(round(orig_width)));
-        heightEdit->setText( QString::number(round(orig_height)));
+        if (ratio > 0.0)
+        {
+            widthEdit->setText( QString::number(round(ratio * orig_width)));
+            heightEdit->setText( QString::number(round(ratio * orig_height)));
+        } else {
+            widthEdit->setText( QString::number(round(orig_width)));
+            heightEdit->setText( QString::number(round(orig_height)));
+        }
     }
+    orig_ratio = ratio;
 }
