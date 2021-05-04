@@ -12,7 +12,10 @@ public:
     void openImage(QString filename);
     void saveImage(QString filename);
     void adjustWindowSize(bool animation=false);
-    QImage reFilter(QImage imgre, QImage img0, float mult);
+    QImage reFilter(QImage, QImage, float);
+    int SelectChannelPixel(QRgb pix, int);
+    QRgb InterpolateBiCubic (QImage, float, float);
+    QImage resizeImageBicub (QImage, unsigned, unsigned);
     //Variables declaration
     Canvas *canvas;
     ImageData data;

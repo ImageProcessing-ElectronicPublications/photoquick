@@ -619,6 +619,112 @@ QImage Window:: reFilter(QImage imgre, QImage img0, float mult)
     return img0;
 }
 
+int Window:: SelectChannelPixel(QRgb pix, int channel)
+{
+    int value;
+    switch (channel)
+    {
+     case 0:
+        value = qRed(pix);
+        break;
+    case 1:
+        value = qGreen(pix);
+        break;
+    case 2:
+        value = qBlue(pix);
+        break;
+    default:
+        value = qAlpha(pix);
+        break;
+    }
+    return value;
+}
+QRgb Window:: InterpolateBiCubic (QImage img, float y, float x)
+{
+    int i, d, dn, xi, yi, xf, yf;
+    float d0, d2, d3, a0, a1, a2, a3;
+    float dx, dy, k2 = 1.0f / 2.0f, k3 = 1.0f / 3.0f, k6 = 1.0f / 6.0f;
+    float Cc, C[4];
+    int Ci, pt[4];
+    int height = img.height();
+    int width = img.width();;
+    QRgb imgpix;
+    
+    yi = (int)y;
+    yi = (yi < 0) ? 0 : (yi < height) ? yi : (height - 1);
+    xi = (int)x;
+    xi = (xi < 0) ? 0 : (xi < width) ? xi : (width - 1);
+    dy = y - yi;
+    dx = x - xi;
+    dn = (img.hasAlphaChannel()) ? 4 : 3;
+    for(d = 0; d < dn; d++)
+    {
+        for(i = -1; i < 3; i++)
+        {
+            yf = (int)y + i;
+            yf = (yf < 0) ? 0 : (yf < height) ? yf : (height - 1);
+            QRgb *row = (QRgb*)img.constScanLine(yf);
+            xf = (int)x;
+            xf = (xf < 0) ? 0 : (xf < width) ? xf : (width - 1);
+            a0 = SelectChannelPixel(row[xf], d);
+            xf = (int)x - 1;
+            xf = (xf < 0) ? 0 : (xf < width) ? xf : (width - 1);
+            d0 = SelectChannelPixel(row[xf], d);
+            d0 -= a0;
+            xf = (int)x + 1;
+            xf = (xf < 0) ? 0 : (xf < width) ? xf : (width - 1);
+            d2 = SelectChannelPixel(row[xf], d);
+            d2 -= a0;
+            xf = (int)x + 2;
+            xf = (xf < 0) ? 0 : (xf < width) ? xf : (width - 1);
+            d3 = SelectChannelPixel(row[xf], d);
+            d3 -= a0;
+            a1 = -k3 * d0 + d2 - k6 * d3;
+            a2 = k2 * d0 + k2 * d2;
+            a3 = -k6 * d0 - k2 * d2 + k6 * d3;
+            C[i + 1] = a0 + (a1 + (a2 + a3 * dx) * dx) * dx;
+        }
+        a0 = C[1];
+        d0 = C[0] - a0;
+        d2 = C[2] - a0;
+        d3 = C[3] - a0;
+        a1 = -k3 * d0 + d2 - k6 * d3;
+        a2 = k2 * d0 + k2 * d2;
+        a3 = -k6 * d0 - k2 * d2 + k6 * d3;
+        Cc = a0 + (a1 + (a2 + a3 * dy) * dy) * dy;
+        Ci = (int)(Cc + 0.5f);
+        pt[d] = (Ci < 0) ? 0 : (Ci > 255) ? 255 : Ci;
+    }
+    if (dn > 3)
+        imgpix = qRgba(pt[0], pt[1], pt[2],  pt[3]);
+    else
+        imgpix = qRgb(pt[0], pt[1], pt[2]);
+
+    return imgpix;
+}
+QImage Window:: resizeImageBicub (QImage img, unsigned new_height, unsigned new_width)
+{
+    unsigned y, x;
+    unsigned height = img.height();
+    unsigned width = img.width();;
+    float xFactor = (float)width / new_width;
+    float yFactor = (float)height / new_height;
+    float ox, oy;
+    QImage dstImg(new_width, new_height, img.format());
+
+    for (y = 0; y < new_height; y++ )
+    {
+        oy  = ((float)y + 0.5f) * yFactor - 0.5f;
+        QRgb *row = (QRgb*)dstImg.constScanLine(y);
+        for (x = 0; x < new_width; x++ )
+        {
+            ox  = ((float)x  + 0.5f) * xFactor - 0.5f;
+            row[x] = InterpolateBiCubic (img, oy, ox);
+        }
+    }
+    return dstImg;
+}
+
 void
 Window:: resizeImage()
 {
@@ -626,8 +732,8 @@ Window:: resizeImage()
     if (dialog->exec() == 1) {
         QImage img;
         int nwidth, nheight, owidth, oheight;
-        Qt::TransformationMode tfmMode = dialog->smoothScaling->isChecked() ?
-                        Qt::SmoothTransformation : Qt::FastTransformation;
+        int mode = (dialog->smoothScaling->isChecked() ? (dialog->cubicScaling->isChecked() ? 2 : 1) : 0);
+        Qt::TransformationMode tfmMode = mode ? Qt::SmoothTransformation : Qt::FastTransformation;
         owidth = data.image.width();
         oheight = data.image.height();
         QString img_width = dialog->widthEdit->text();
@@ -636,21 +742,27 @@ Window:: resizeImage()
         nheight = (img_height.isEmpty()) ? 0 : img_height.toInt();
         if (nwidth < 1 and nheight < 1) return;
         if (nheight < 1)
-            img = data.image.scaledToWidth(nwidth, tfmMode);
+            nheight = (int)((float)oheight * ((float)nwidth / owidth) + 0.5f);
         else if (nwidth < 1)
-            img = data.image.scaledToHeight(nheight, tfmMode);
+            nwidth = (int)((float)owidth * ((float)nheight / oheight) + 0.5f);
+        nheight = (nheight > 1) ? nheight : 1;
+        nwidth = (nwidth > 1) ? nwidth : 1;
+        if (mode > 1)
+            img = resizeImageBicub (data.image, nheight, nwidth);
         else
             img = data.image.scaled(nwidth, nheight, Qt::IgnoreAspectRatio, tfmMode);
         if (dialog->checkRIS->isChecked())
         {
             QString multRIS = dialog->multRIS->text();
             float mult = (multRIS.isEmpty()) ? 0 : multRIS.toFloat();
-            QImage imgb = img.scaled(owidth, oheight, Qt::IgnoreAspectRatio, tfmMode);
+            QImage imgb;
+            if (mode > 1)
+                imgb = resizeImageBicub (img, oheight, owidth);
+            else
+                imgb = img.scaled(owidth, oheight, Qt::IgnoreAspectRatio, tfmMode);
             imgb = reFilter(imgb, data.image, mult);
-            if (nheight < 1)
-                img = imgb.scaledToWidth(nwidth, tfmMode);
-            else if (nwidth < 1)
-                img = imgb.scaledToHeight(nheight, tfmMode);
+            if (mode > 1)
+                img = resizeImageBicub (imgb, nheight, nwidth);
             else
                 img = imgb.scaled(nwidth, nheight, Qt::IgnoreAspectRatio, tfmMode);
         }
