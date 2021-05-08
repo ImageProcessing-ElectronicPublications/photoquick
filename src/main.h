@@ -61,6 +61,7 @@ public slots:
     void gammaCorrection();
     void whiteBalance();
     void enhanceColors();
+    void vignetteFilter();
     void grayWorldFilter();
     void lensDistort();
     // info menu
