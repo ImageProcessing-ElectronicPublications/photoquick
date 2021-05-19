@@ -12,30 +12,49 @@ This file is a part of photoquick program, which is GPLv3 licensed
 
 
 //Mean for Isometric mode Un-tilt (PerspectiveTransform)
-QPoint meanx2(QPoint p1, QPoint p2, QPoint p3, QPoint p4)
+QPoint meanx2(QPolygon p)
 {
-    float mx, my;
-    mx = 0.25f * (float)(p1.x() + p2.x() + p3.x() + p4.x());
-    my = 0.25f * (float)(p1.y() + p2.y() + p3.y() + p4.y());
+    int i, n = p.count();
+    float mx = 0.0f, my = 0.0f;
+    if (n > 0)
+    {
+        for (i = 0; i < n; i++)
+        {
+            mx += (float)p[i].x();
+            my += (float)p[i].y();
+        }
+        mx /= (float)n;
+        my /= (float)n;
+    }
     return QPoint((int)(mx + 0.5f), (int)(my + 0.5f));
 }
 //StDev for Isometric mode Un-tilt (PerspectiveTransform)
-QPoint stdevx2(QPoint p1, QPoint p2, QPoint p3, QPoint p4)
+QPoint stdevx2(QPolygon p)
 {
-    float mx, my, sx, sy;
-    float dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4;
-    mx = 0.25f * (float)(p1.x() + p2.x() + p3.x() + p4.x());
-    my = 0.25f * (float)(p1.y() + p2.y() + p3.y() + p4.y());
-    dx1 = mx - (float)p1.x();
-    dx2 = mx - (float)p2.x();
-    dx3 = mx - (float)p3.x();
-    dx4 = mx - (float)p4.x();
-    sx = sqrtf(dx1 * dx1 + dx2 * dx2 + dx3 * dx3 + dx4 * dx4) * 0.5f;
-    dy1 = my - (float)p1.y();
-    dy2 = my - (float)p2.y();
-    dy3 = my - (float)p3.y();
-    dy4 = my - (float)p4.y();
-    sy = sqrtf(dy1 * dy1 + dy2 * dy2 + dy3 * dy3 + dy4 * dy4) * 0.5f;
+    int i, n = p.count();
+    float mx = 0.0f, my = 0.0f, sx = 0.0f, sy = 0.0f;
+    float dx, dy;
+    if (n > 0)
+    {
+        for (i = 0; i < n; i++)
+        {
+            mx += (float)p[i].x();
+            my += (float)p[i].y();
+        }
+        mx /= (float)n;
+        my /= (float)n;
+        for (i = 0; i < n; i++)
+        {
+            dx = mx - (float)p[i].x();
+            dy = my - (float)p[i].y();
+            sx += dx * dx;
+            sy += dy * dy;
+        }
+        sx /= (float)n;
+        sy /= (float)n;
+        sx = sqrtf(sx);
+        sy = sqrtf(sy);
+    }
     return QPoint((int)(sx + 0.5f), (int)(sy + 0.5f));
 }
 
@@ -355,10 +374,17 @@ PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
     pixmap = canvas->pixmap()->copy();
     scaleX = float(pixmap.width())/canvas->data->image.width();
     scaleY = float(pixmap.height())/canvas->data->image.height();
-    p1 = topleft = QPoint(0,0);
-    p2 = topright = QPoint(pixmap.width()-1, 0);
-    p3 = btmleft = QPoint(0, pixmap.height()-1);
-    p4 = btmright = QPoint(pixmap.width()-1, pixmap.height()-1);
+    int i, n = 4, sx = 1, sy = 1, xt, yt;
+    for (i = 0; i < n; i++)
+    {
+        xt = (sx < 0) ? (pixmap.width() - 1) : 0;
+        yt = (sy < 0) ? (pixmap.height() - 1) : 0;
+        p << QPoint(xt, yt);
+        pt << QPoint(xt, yt);
+        sx = sx - sy;
+        sy += sx; //  1, -1, -1,  1
+        sx -= sy; //  1,  1, -1, -1
+    }
     // add buttons
     QCheckBox *checkIso = new QCheckBox("Isometric", statusbar);
     statusbar->addPermanentWidget(checkIso);
@@ -377,29 +403,27 @@ PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
 void
 PerspectiveTransform:: onMousePress(QPoint pos)
 {
+    int i, n, sx = 1, sy = 1;
     clk_pos = pos;
     mouse_pressed = true;
     // Determine which position is clicked
-    if (QRect(topleft, QSize(60, 60)).contains(clk_pos))
-        clk_area = 1;   // Topleft is clicked
-    else if (QRect(topright, QSize(-60, 60)).contains(clk_pos))
-        clk_area = 2;   // Topright is clicked
-    else if (QRect(btmleft, QSize(60, -60)).contains(clk_pos))
-        clk_area = 3;   // Bottomleft is clicked
-    else if (QRect(btmright, QSize(-60, -60)).contains(clk_pos))
-        clk_area = 4;   // bottom right corner clicked
-    else
-        clk_area = 0;
+    clk_area = 0;
+    n = pt.count();
+    for (i = 0; i < n; i++)
+    {
+        if (QRect(pt[i], QSize(sx * 60, sy * 60)).contains(clk_pos))
+            clk_area = i + 1;
+        sx = sx - sy;
+        sy += sx; //  1, -1, -1,  1
+        sx -= sy; //  1,  1, -1, -1
+    }
 }
 
 void
 PerspectiveTransform:: onMouseRelease(QPoint /*pos*/)
 {
     mouse_pressed = false;
-    topleft = p1;
-    topright = p2;
-    btmleft = p3;
-    btmright = p4;
+    pt = p;
 }
 
 void
@@ -409,29 +433,10 @@ PerspectiveTransform:: onMouseMove(QPoint pos)
     QPoint moved = pos - clk_pos;
     QPoint last_pt = QPoint(pixmap.width()-1, pixmap.height()-1);
     QPoint new_pt;
-    switch (clk_area) {
-    case 1 : { // Top left corner is clicked
-        new_pt = topleft + moved;
-        p1 = QPoint(MAX(0, new_pt.x()), MAX(0, new_pt.y()));
-        break;
-    }
-    case 2 : { // Top right corner is clicked
-        new_pt = topright + moved;
-        p2 = QPoint(MIN(last_pt.x(), new_pt.x()), MAX(0, new_pt.y()));
-        break;
-    }
-    case 3 : { // Bottom left corner is clicked
-        new_pt = btmleft + moved;
-        p3 = QPoint(MAX(0, new_pt.x()), MIN(last_pt.y(), new_pt.y()));
-        break;
-    }
-    case 4 : { // Bottom right corner is clicked
-        QPoint new_pt = btmright + moved;
-        p4 = QPoint(MIN(last_pt.x(), new_pt.x()), MIN(last_pt.y(), new_pt.y()));
-        break;
-    }
-    default:
-        break;
+    if (clk_area > 0)
+    {
+        new_pt = pt[clk_area - 1] + moved;
+        p[clk_area - 1] = QPoint(MIN(last_pt.x(), MAX(0, new_pt.x())), MIN(last_pt.y(), MAX(0, new_pt.y())));
     }
     drawCropBox();
 }
@@ -439,26 +444,33 @@ PerspectiveTransform:: onMouseMove(QPoint pos)
 void
 PerspectiveTransform:: drawCropBox()
 {
+    float start, span;
+    int i, n, j0, j1, j2, j3;
     QPixmap pm = pixmap.copy();
     QPainter painter(&pm);
     QPolygonF polygon;
-    polygon << p1<< p2<< p4<< p3;
+    polygon << p[0] << p[1] << p[2] << p[3];
     painter.drawPolygon(polygon);
-    float start, span;
-    calcArc(p1, p2, p3, p4, start, span);
-    painter.drawArc(p1.x()-30, p1.y()-30, 60,60, 16*start, 16*span);
-    calcArc(p2, p1, p4, p3, start, span);
-    painter.drawArc(p2.x()-30, p2.y()-30, 60,60, 16*start, 16*span);
-    calcArc(p3, p4, p1, p2, start, span);
-    painter.drawArc(p3.x()-30, p3.y()-30, 60,60, 16*start, 16*span);
-    calcArc(p4, p2, p3, p1, start, span);
-    painter.drawArc(p4.x()-30, p4.y()-30, 60,60, 16*start, 16*span);
-    painter.setPen(Qt::white);
-    polygon.clear();
-    polygon<< p1+QPoint(1,1)<< p2+QPoint(-1,1)<< p4+QPoint(-1,-1)<< p3+QPoint(1,-1);
-    painter.drawPolygon(polygon);
-    painter.end();
-    canvas->setPixmap(pm);
+    n = p.count();
+    if (n == 4)
+    {
+        for (i = 0; i < n; i++)
+        {
+            j0 = i;
+            j3 = (i + 2) % 4;
+            j1 = ((i - 1) < 0) ? (1 - i) : (i - 1);
+            j2 = (j1 + 2) % 4;
+
+            calcArc(p[j0], p[j1], p[j2], p[j3], start, span);
+            painter.drawArc(p[i].x() - 30, p[i].y() - 30, 60, 60, 16 * start, 16 * span);
+        }
+        painter.setPen(Qt::white);
+        polygon.clear();
+        polygon << (p[0] + QPoint(1,1)) << (p[1] + QPoint(-1,1)) << (p[2] + QPoint(-1,-1)) << (p[3] + QPoint(1,-1));
+        painter.drawPolygon(polygon);
+        painter.end();
+        canvas->setPixmap(pm);
+    }
 }
 
 void
@@ -470,46 +482,48 @@ PerspectiveTransform:: isomode()
 void
 PerspectiveTransform:: transform()
 {
+    int i, n, min_w, min_h, max_w, max_h;
     QPoint mxy;
     QPoint sxy;
-    int min_w, min_h, max_w, max_h;
-    p1 = QPoint(p1.x()/scaleX, p1.y()/scaleY);
-    p2 = QPoint(p2.x()/scaleX, p2.y()/scaleY);
-    p3 = QPoint(p3.x()/scaleX, p3.y()/scaleY);
-    p4 = QPoint(p4.x()/scaleX, p4.y()/scaleY);
-    if (fisometric)
+    n = p.count();
+    if (n == 4)
     {
-        mxy = meanx2(p1, p2, p3, p4);
-        sxy = stdevx2(p1, p2, p3, p4);
-        min_w = mxy.x() - sxy.x();
-        min_h = mxy.y() - sxy.y();
-        max_w = mxy.x() + sxy.x();
-        max_h = mxy.y() + sxy.y();
-    }
-    else
-    {
-        min_w = 0;
-        min_h = 0;
-        max_w = MAX(p2.x()-p1.x(), p4.x()-p3.x());
-        max_h = MAX(p3.y()-p1.y(), p4.y()-p2.y());
-    }
-    QPolygonF mapFrom;
-    mapFrom << p1<< p2<< p3<< p4;
-    QPolygonF mapTo;
-    mapTo << QPointF(min_w,min_h)<< QPointF(max_w,min_h)<< QPointF(min_w,max_h)<< QPointF(max_w,max_h);
-    QTransform tfm;
-    QTransform::quadToQuad(mapFrom, mapTo, tfm);
-    QImage img = canvas->data->image.transformed(tfm, Qt::SmoothTransformation);
-    QTransform trueMtx = QImage::trueMatrix(tfm,canvas->data->image.width(),canvas->data->image.height());
-    if (fisometric)
-    {
-        canvas->data->image = img;
-    }
-    else
-    {
-        topleft = trueMtx.map(p1);
-        btmright = trueMtx.map(p4);
-        canvas->data->image = img.copy(QRect(topleft, btmright));
+        for (i = 0; i < n; i++)
+            p[i] = QPoint(p[i].x() / scaleX, p[i].y() / scaleY);
+        if (fisometric)
+        {
+            mxy = meanx2(p);
+            sxy = stdevx2(p);
+            min_w = mxy.x() - sxy.x();
+            min_h = mxy.y() - sxy.y();
+            max_w = mxy.x() + sxy.x();
+            max_h = mxy.y() + sxy.y();
+        }
+        else
+        {
+            min_w = 0;
+            min_h = 0;
+            max_w = MAX(p[1].x() - p[0].x(), p[2].x() - p[3].x());
+            max_h = MAX(p[3].y() - p[0].y(), p[2].y() - p[1].y());
+        }
+        QPolygonF mapFrom;
+        mapFrom << p[0] << p[1] << p[2] << p[3];
+        QPolygonF mapTo;
+        mapTo << QPointF(min_w, min_h) << QPointF(max_w, min_h) << QPointF(max_w, max_h) << QPointF(min_w, max_h);
+        QTransform tfm;
+        QTransform::quadToQuad(mapFrom, mapTo, tfm);
+        QImage img = canvas->data->image.transformed(tfm, Qt::SmoothTransformation);
+        QTransform trueMtx = QImage::trueMatrix(tfm,canvas->data->image.width(),canvas->data->image.height());
+        if (fisometric)
+        {
+            canvas->data->image = img;
+        }
+        else
+        {
+            pt[0] = trueMtx.map(p[0]);
+            pt[2] = trueMtx.map(p[2]);
+            canvas->data->image = img.copy(QRect(pt[0], pt[2]));
+        }
     }
     finish();
 }

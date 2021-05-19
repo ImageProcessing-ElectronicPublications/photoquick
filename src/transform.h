@@ -71,7 +71,8 @@ public:
 private:
     QPixmap pixmap;
     bool mouse_pressed, fisometric;
-    QPoint topleft, topright, btmleft, btmright, clk_pos, p1,p2,p3,p4;
+    QPolygon pt, p;
+    QPoint clk_pos;
     int clk_area;
     float scaleX, scaleY;
     QList<QWidget *> crop_widgets;
