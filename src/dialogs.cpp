@@ -2,9 +2,6 @@
 #include "dialogs.h"
 #include "common.h"
 #include "filters.h"
-#include <QDialogButtonBox>
-#include <QGridLayout>
-#include <cmath>
 
 // ------------ Dialog to set JPG image quality for saving ------------
 
@@ -264,4 +261,22 @@ GammaDialog:: run()
     QImage img = image.copy();
     applyGamma(img, gamma);
     preview(img);
+}
+
+DeWarpDialog:: DeWarpDialog(QWidget *parent) : QDialog(parent)
+{
+    this->resize(150, 120);
+    this->setWindowTitle("Dewarp Image");
+    vLayout = new QVBoxLayout(this);
+    countLabel = new QLabel("Count nodes :", this);
+    countSpin = new QSpinBox(this);
+    countSpin->setAlignment(Qt::AlignHCenter);
+    countSpin->setRange(2, 50);
+    countSpin->setValue(5);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    vLayout->addWidget(countLabel);
+    vLayout->addWidget(countSpin);
+    vLayout->addWidget(btnBox);
+    connect(btnBox, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(btnBox, SIGNAL(rejected()), this, SLOT(reject()));
 }

@@ -109,3 +109,33 @@ public slots:
     void ratioTextChanged();
 };
 
+// _____________________________________________________________________
+// simple dewarping transform manager
+
+class DeWarping : public QObject
+{
+    Q_OBJECT
+public:
+    DeWarping(Canvas *canvas, QStatusBar *statusbar, int count);
+    Canvas *canvas;
+    QStatusBar *statusbar;
+    QPushButton *cropnowBtn, *cropcancelBtn;
+private:
+    QPixmap pixmap;
+    bool mouse_pressed;
+    QPolygon lnht, lnh, lndt, lnd;
+    QPoint clk_pos;
+    int clk_area_h, clk_area_d;
+    float scaleX, scaleY, areah, aread, ylnh, ylnd;
+    QList<QWidget *> crop_widgets;
+    void drawDeWarpLine();
+private slots:
+    void onMousePress(QPoint pos);
+    void onMouseRelease(QPoint pos);
+    void onMouseMove(QPoint pos);
+    void transform();
+    void finish();
+signals:
+    void finished();
+};
+

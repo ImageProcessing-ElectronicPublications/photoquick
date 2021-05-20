@@ -645,3 +645,302 @@ ResizeDialog:: ratioTextChanged()
     }
     orig_ratio = ratio;
 }
+
+// ******************************************************************* |
+//                         Simple DeWarping
+// ------------------------------------------------------------------- |
+
+float calcArea(QPolygon p)
+{
+    int i, n = p.count();
+    float area = 0.0f;
+    if (n > 0)
+    {
+        area = p[0].y() * p[n - 1].x() - p[0].x() * p[n - 1].y();
+        for (i = 0; i < n - 1; i++)
+        {
+            area += (p[i + 1].y() * p[i].x() - p[i + 1].x() * p[i].y());
+        }
+        area *= 0.5f;
+        area = (area < 0) ? -area : area;
+    }
+    return area;
+}
+
+int SelectChannelPixel(QRgb pix, int channel)
+{
+    int value;
+    switch (channel)
+    {
+     case 0:
+        value = qRed(pix);
+        break;
+    case 1:
+        value = qGreen(pix);
+        break;
+    case 2:
+        value = qBlue(pix);
+        break;
+    default:
+        value = qAlpha(pix);
+        break;
+    }
+    return value;
+}
+
+QRgb InterpolateCubic (QImage img, float y, int x)
+{
+    int i, d, dn, yi, yf;
+    float d0, d2, d3, a0, a1, a2, a3;
+    float dy, k2 = 1.0f / 2.0f, k3 = 1.0f / 3.0f, k6 = 1.0f / 6.0f;
+    float Cc, C[4];
+    int Ci, pt[4];
+    int height = img.height();
+    QRgb imgpix;
+
+    yi = (int)y;
+    yi = (yi < 0) ? 0 : (yi < height) ? yi : (height - 1);
+    dy = y - yi;
+    dn = (img.hasAlphaChannel()) ? 4 : 3;
+    for(d = 0; d < dn; d++)
+    {
+        for(i = -1; i < 3; i++)
+        {
+            yf = (int)y + i;
+            yf = (yf < 0) ? 0 : (yf < height) ? yf : (height - 1);
+            QRgb *row = (QRgb*)img.constScanLine(yf);
+            C[i + 1] = SelectChannelPixel(row[x], d);
+        }
+        a0 = C[1];
+        d0 = C[0] - a0;
+        d2 = C[2] - a0;
+        d3 = C[3] - a0;
+        a1 = -k3 * d0 + d2 - k6 * d3;
+        a2 = k2 * d0 + k2 * d2;
+        a3 = -k6 * d0 - k2 * d2 + k6 * d3;
+        Cc = a0 + (a1 + (a2 + a3 * dy) * dy) * dy;
+        Ci = (int)(Cc + 0.5f);
+        pt[d] = (Ci < 0) ? 0 : (Ci > 255) ? 255 : Ci;
+    }
+    if (dn > 3)
+        imgpix = qRgba(pt[0], pt[1], pt[2],  pt[3]);
+    else
+        imgpix = qRgb(pt[0], pt[1], pt[2]);
+
+    return imgpix;
+}
+
+DeWarping::
+DeWarping(Canvas *canvas, QStatusBar *statusbar, int count) : QObject(canvas),
+                                canvas(canvas), statusbar(statusbar)
+{
+    int i, n = count, dxt, xt, yth, ytd;
+    mouse_pressed = false;
+    canvas->drag_to_scroll = false;
+    pixmap = canvas->pixmap()->copy();
+    scaleX = float(pixmap.width())/canvas->data->image.width();
+    scaleY = float(pixmap.height())/canvas->data->image.height();
+    dxt = (pixmap.width() - 1) / (n + 1);
+    xt = dxt;
+    ytd = (pixmap.height() - 1) / 4;
+    yth = ytd + ytd + ytd;
+    lnh << QPoint(0, 0);
+    lnht << QPoint(0, 0);
+    lnd << QPoint(0, 0);
+    lndt << QPoint(0, 0);
+    lnh << QPoint(0, yth);
+    lnht << QPoint(0, yth);
+    lnd << QPoint(0, ytd);
+    lndt << QPoint(0, ytd);
+    for (i = 0; i < n; i++)
+    {
+        lnh << QPoint(xt, yth);
+        lnht << QPoint(xt, yth);
+        lnd << QPoint(xt, ytd);
+        lndt << QPoint(xt, ytd);
+        xt += dxt;
+    }
+    lnh << QPoint(pixmap.width(), yth);
+    lnht << QPoint(pixmap.width(), yth);
+    lnd << QPoint(pixmap.width(), ytd);
+    lndt << QPoint(pixmap.width(), ytd);
+    lnh << QPoint(pixmap.width(), 0);
+    lnht << QPoint(pixmap.width(), 0);
+    lnd << QPoint(pixmap.width(), 0);
+    lndt << QPoint(pixmap.width(), 0);
+    // add buttons
+    cropnowBtn = new QPushButton("DeWarp Now", statusbar);
+    statusbar->addPermanentWidget(cropnowBtn);
+    cropcancelBtn = new QPushButton("Cancel", statusbar);
+    statusbar->addPermanentWidget(cropcancelBtn);
+    connect(cropnowBtn, SIGNAL(clicked()), this, SLOT(transform()));
+    connect(cropcancelBtn, SIGNAL(clicked()), this, SLOT(finish()));
+    crop_widgets << cropnowBtn << cropcancelBtn;
+    statusbar->showMessage("Drag corners to fit edges around tilted image/document");
+    drawDeWarpLine();
+}
+
+void
+DeWarping:: onMousePress(QPoint pos)
+{
+    int i, n, r = 15;
+    clk_pos = pos;
+    mouse_pressed = true;
+    // Determine which position is clicked
+    clk_area_h = 0;
+    clk_area_d = 0;
+    n = lnht.count();
+    for (i = 2; i < n - 2; i++)
+    {
+        if (QRect((lnht[i] + QPoint(-r, -r)), QSize(r + r, r + r)).contains(clk_pos))
+            clk_area_h = i - 1;
+        if (QRect((lndt[i] + QPoint(-r, -r)), QSize(r + r, r + r)).contains(clk_pos))
+            clk_area_d = i - 1;
+    }
+}
+
+void
+DeWarping:: onMouseRelease(QPoint /*pos*/)
+{
+    mouse_pressed = false;
+    lnht = lnh;
+    lndt = lnd;
+}
+
+void
+DeWarping:: onMouseMove(QPoint pos)
+{
+    if (not mouse_pressed) return;
+    int clk_area, n = lnht.count();
+    QPoint moved = pos - clk_pos;
+    QPoint null_pt = QPoint(-1, -1);
+    QPoint last_pt = QPoint(pixmap.width(), pixmap.height());
+    QPoint new_pt, lnhc, lndc, lnhp, lndp, lnhn, lndn;
+    clk_area = (clk_area_h > 0) ? clk_area_h : clk_area_d;
+    lnhc = (clk_area > 0) ? lnht[clk_area + 1] : null_pt;
+    lndc = (clk_area > 0) ? lndt[clk_area + 1] : null_pt;
+    lnhp = (clk_area > 1) ? lnht[clk_area] : null_pt;
+    lndp = (clk_area > 1) ? lndt[clk_area] : null_pt;
+    lnhn = (clk_area < n - 2) ? lnht[clk_area + 2] : last_pt;
+    lndn = (clk_area < n - 2) ? lndt[clk_area + 2] : last_pt;
+    if (clk_area_h > 0)
+    {
+        new_pt = lnhc + moved;
+        lnh[clk_area_h + 1] = QPoint(MIN(lnhn.x() - 1, MAX(lnhp.x() + 1, new_pt.x())), MIN(last_pt.y() - 1, MAX(lndc.y() + 1, new_pt.y())));
+        lnh[1] = QPoint(0, lnh[2].y());
+        lnh[n-2] = QPoint(pixmap.width(), lnh[n - 3].y());
+    }
+    if (clk_area_d > 0)
+    {
+        new_pt = lndc + moved;
+        lnd[clk_area_d + 1] = QPoint(MIN(lndn.x() - 1, MAX(lndp.x() + 1, new_pt.x())), MIN(lnhc.y() - 1, MAX(0, new_pt.y())));
+        lnd[1] = QPoint(0, lnd[2].y());
+        lnd[n-2] = QPoint(pixmap.width(), lnd[n - 3].y());
+    }
+    drawDeWarpLine();
+}
+
+void
+DeWarping:: drawDeWarpLine()
+{
+    int i, n, r = 15;
+    float area;
+    QPixmap pm = pixmap.copy();
+    QPainter painter(&pm);
+    n = lnh.count();
+    area = calcArea(lnh);
+    ylnh = area / pixmap.width();
+    area = calcArea(lnd);
+    ylnd = area / pixmap.width();
+    for (i = 2; i < n - 2; i++)
+    {
+        painter.drawArc(lnh[i].x() - r, lnh[i].y() - r, r + r, r + r, 0, 5760.0f);
+        painter.drawArc(lnd[i].x() - r, lnd[i].y() - r, r + r, r + r, 0, 5760.0f);
+    }
+//    painter.setPen(Qt::white);
+    painter.drawPolygon(lnh);
+    painter.drawPolygon(lnd);
+    painter.setPen(Qt::red);
+    painter.drawRect(0, ylnh, pixmap.width(), 0);
+    painter.drawRect(0, ylnd, pixmap.width(), 0);
+    painter.end();
+    canvas->setPixmap(pm);
+}
+
+void
+DeWarping:: transform()
+{
+    int i, n, y, x, w, h, ih, id;
+    float yh, yd, dyh, dyd, yk0, yk1, yk2, oy;
+    n = lnh.count();
+    if (n > 4)
+    {
+        QImage img = canvas->data->image.copy();
+        QRgb *row;
+        w = img.width();
+        h = img.height();
+        for (i = 0; i < n; i++)
+        {
+            lnh[i] = QPoint(lnh[i].x() / scaleX, lnh[i].y() / scaleY);
+            lnd[i] = QPoint(lnd[i].x() / scaleX, lnd[i].y() / scaleY);
+        }
+        ylnh /= scaleY;
+        ylnd /= scaleY;
+        ih = id = 2;
+        dyh = (float)(lnh[ih].y() - lnh[ih - 1].y()) / (lnh[ih].x() - lnh[ih - 1].x());
+        dyd = (float)(lnd[id].y() - lnd[id - 1].y()) / (lnd[id].x() - lnd[id - 1].x());
+        for (x = 0; x < w; x++)
+        {
+            if (x == lnh[ih].x())
+            {
+                ih++;
+                dyh = (float)(lnh[ih].y() - lnh[ih - 1].y()) / (lnh[ih].x() - lnh[ih - 1].x());
+            }
+            if (x == lnd[id].x())
+            {
+                id++;
+                dyd = (float)(lnd[id].y() - lnd[id - 1].y()) / (lnd[id].x() - lnd[id - 1].x());
+            }
+            yh = (float)lnh[ih - 1].y() + dyh * (x - lnh[ih - 1].x());
+            yd = (float)lnd[id - 1].y() + dyd * (x - lnd[id - 1].x());
+            yk0 = yd / ylnd;
+            yk1 = (yh - yd) / (ylnh - ylnd);
+            yk2 = (h - yh) / (h - ylnh);
+            for (y = 0; y < (int)(ylnd + 0.5f); y++)
+            {
+                row = (QRgb*)img.constScanLine(y);
+                oy = (float)y * yk0;
+                row[x] = InterpolateCubic (canvas->data->image, oy, x);
+            }
+            for (y = (int)(ylnd + 0.5f); y < (int)(ylnh + 0.5f); y++)
+            {
+                row = (QRgb*)img.constScanLine(y);
+                oy = yd + (float)(y - ylnd) * yk1;
+                row[x] = InterpolateCubic (canvas->data->image, oy, x);
+            }
+            for (y = (int)(ylnh + 0.5f); y < h; y++)
+            {
+                row = (QRgb*)img.constScanLine(y);
+                oy = yh + (float)(y - ylnh) * yk2;
+                row[x] = InterpolateCubic (canvas->data->image, oy, x);
+            }
+        }
+        canvas->data->image = img;
+    }
+    finish();
+}
+
+void
+DeWarping:: finish()
+{
+    canvas->showScaled();
+    canvas->drag_to_scroll = true;
+    // remove buttons
+    while (not crop_widgets.isEmpty()) {
+        QWidget *widget = crop_widgets.takeLast();
+        statusbar->removeWidget(widget);
+        widget->deleteLater();
+    }
+    emit finished();
+    this->deleteLater();
+}

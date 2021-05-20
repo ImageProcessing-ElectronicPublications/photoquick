@@ -56,6 +56,7 @@ Window:: Window()
     QMenu *transformMenu = new QMenu(transformBtn);
     transformMenu->addAction("Mirror Image", this, SLOT(mirror()));
     transformMenu->addAction("Un-tilt Image", this, SLOT(perspectiveTransform()));
+    transformMenu->addAction("DeWarping", this, SLOT(deWarping()));
     transformBtn->setMenu(transformMenu);
     QMenu *decorateMenu = new QMenu(decorateBtn);
     decorateMenu->addAction("Photo Grid", this, SLOT(createPhotoGrid()));
@@ -1168,6 +1169,23 @@ Window:: perspectiveTransform()
     frame_2->hide();
     setWindowTitle("Perspective Transform");
     PerspectiveTransform *transform = new PerspectiveTransform(canvas, statusbar);
+    connect(canvas, SIGNAL(mousePressed(QPoint)), transform, SLOT(onMousePress(QPoint)));
+    connect(canvas, SIGNAL(mouseReleased(QPoint)), transform, SLOT(onMouseRelease(QPoint)));
+    connect(canvas, SIGNAL(mouseMoved(QPoint)), transform, SLOT(onMouseMove(QPoint)));
+    connect(transform, SIGNAL(finished()), this, SLOT(onEditingFinished()));
+}
+
+void
+Window:: deWarping()
+{
+    DeWarpDialog *dlg = new DeWarpDialog(this);
+    if (dlg->exec() != QDialog::Accepted)
+        return;
+    int countnodes = dlg->countSpin->value();
+    frame->hide();
+    frame_2->hide();
+    setWindowTitle("DeWarping");
+    DeWarping *transform = new DeWarping(canvas, statusbar, countnodes);
     connect(canvas, SIGNAL(mousePressed(QPoint)), transform, SLOT(onMousePress(QPoint)));
     connect(canvas, SIGNAL(mouseReleased(QPoint)), transform, SLOT(onMouseRelease(QPoint)));
     connect(canvas, SIGNAL(mouseMoved(QPoint)), transform, SLOT(onMouseMove(QPoint)));

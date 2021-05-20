@@ -6,6 +6,9 @@
 #include <QCheckBox>
 #include <QImage>
 #include <QTimer>
+#include <QDialogButtonBox>
+#include <QGridLayout>
+#include <cmath>
 
 // Dialog to set JPG image quality for saving
 class QualityDialog : public QDialog
@@ -97,5 +100,16 @@ public:
 
     GammaDialog(QLabel *parent, QImage img, float scale);
     void run();
+};
+
+class DeWarpDialog : public QDialog
+{
+public:
+    int countn;
+    QVBoxLayout *vLayout;
+    QLabel *countLabel;
+    QSpinBox *countSpin;
+    QDialogButtonBox *btnBox;
+    DeWarpDialog(QWidget *parent);
 };
 
