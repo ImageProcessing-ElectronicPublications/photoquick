@@ -3,12 +3,6 @@ This file is a part of photoquick program, which is GPLv3 licensed
 */
 #include "transform.h"
 #include "common.h"
-#include <QSettings>
-#include <QPainter>
-#include <QPushButton>
-#include <QMenu>
-#include <QRect>
-#include <cmath>
 
 
 //Mean for Isometric mode Un-tilt (PerspectiveTransform)
@@ -77,17 +71,17 @@ Crop:: Crop(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
     ratio_h = 4.5;
     crop_mode = NO_RATIO;
     // add buttons
-    QPushButton *setRatioBtn = new QPushButton("Set Ratio", statusbar);
+    setRatioBtn = new QPushButton("Set Ratio", statusbar);
     statusbar->addPermanentWidget(setRatioBtn);
-    QMenu *ratioMenu = new QMenu(setRatioBtn);
-    QActionGroup *ratioActions = new QActionGroup(ratioMenu);
-    QAction *action1 = ratioActions->addAction("No Ratio");
-    QAction *action2 = ratioActions->addAction("Ratio - Custom");
-    QAction *action3 = ratioActions->addAction("Ratio - 1:1");
-    QAction *action4 = ratioActions->addAction("Ratio - 3:4");
-    QAction *action5 = ratioActions->addAction("Ratio - 2.5:3.5");
-    QAction *action6 = ratioActions->addAction("Ratio - 3.5:4.5");
-    QAction *action7 = ratioActions->addAction("Fixed Resolution");
+    ratioMenu = new QMenu(setRatioBtn);
+    ratioActions = new QActionGroup(ratioMenu);
+    action1 = ratioActions->addAction("No Ratio");
+    action2 = ratioActions->addAction("Ratio - Custom");
+    action3 = ratioActions->addAction("Ratio - 1:1");
+    action4 = ratioActions->addAction("Ratio - 3:4");
+    action5 = ratioActions->addAction("Ratio - 2.5:3.5");
+    action6 = ratioActions->addAction("Ratio - 3.5:4.5");
+    action7 = ratioActions->addAction("Fixed Resolution");
     action1->setCheckable(true);
     action2->setCheckable(true);
     action3->setCheckable(true);
@@ -105,12 +99,12 @@ Crop:: Crop(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
     ratioMenu->addAction(action7);
     setRatioBtn->setMenu(ratioMenu);
     connect(ratioActions, SIGNAL(triggered(QAction*)), this, SLOT(setCropMode(QAction*)));
-    QWidget *spacer = new QWidget(statusbar);
+    spacer = new QWidget(statusbar);
     spacer->setMinimumWidth(40);
     statusbar->addPermanentWidget(spacer);
-    QPushButton *cropnowBtn = new QPushButton("Crop Now", statusbar);
+    cropnowBtn = new QPushButton("Crop Now", statusbar);
     statusbar->addPermanentWidget(cropnowBtn);
-    QPushButton *cropcancelBtn = new QPushButton("Cancel", statusbar);
+    cropcancelBtn = new QPushButton("Cancel", statusbar);
     statusbar->addPermanentWidget(cropcancelBtn);
     connect(cropnowBtn, SIGNAL(clicked()), this, SLOT(crop()));
     connect(cropcancelBtn, SIGNAL(clicked()), this, SLOT(finish()));
@@ -326,9 +320,9 @@ CropRatioDialog(QWidget *parent, double w, double h) : QDialog(parent)
     heightSpin->setSingleStep(0.1);
     heightSpin->setRange(0.1, 9.9);
     heightSpin->setValue(h);
-    QGridLayout *layout = new QGridLayout(this);
-    QLabel *label1 = new QLabel("Width : Height", this);
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok, Qt::Horizontal, this);
+    layout = new QGridLayout(this);
+    label1 = new QLabel("Width : Height", this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok, Qt::Horizontal, this);
     layout->addWidget(label1, 0,0,1,2);
     layout->addWidget(widthSpin, 1,0,1,1);
     layout->addWidget(heightSpin, 1,1,1,1);
@@ -349,10 +343,10 @@ CropResolutionDialog(QWidget *parent, int w, int h) : QDialog(parent)
     heightSpin->setAlignment(Qt::AlignHCenter);
     heightSpin->setRange(1, h);
     heightSpin->setValue(h);
-    QGridLayout *layout = new QGridLayout(this);
-    QLabel *label1 = new QLabel("Width", this);
-    QLabel *label2 = new QLabel("Height", this);
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok, Qt::Horizontal, this);
+    layout = new QGridLayout(this);
+    label1 = new QLabel("Width", this);
+    label2 = new QLabel("Height", this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok, Qt::Horizontal, this);
     layout->addWidget(label1, 0,0,1,1);
     layout->addWidget(label2, 0,1,1,1);
     layout->addWidget(widthSpin, 1,0,1,1);
@@ -386,11 +380,11 @@ PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
         sx -= sy; //  1,  1, -1, -1
     }
     // add buttons
-    QCheckBox *checkIso = new QCheckBox("Isometric", statusbar);
+    checkIso = new QCheckBox("Isometric?", statusbar);
     statusbar->addPermanentWidget(checkIso);
-    QPushButton *cropnowBtn = new QPushButton("Crop Now", statusbar);
+    cropnowBtn = new QPushButton("Crop Now", statusbar);
     statusbar->addPermanentWidget(cropnowBtn);
-    QPushButton *cropcancelBtn = new QPushButton("Cancel", statusbar);
+    cropcancelBtn = new QPushButton("Cancel", statusbar);
     statusbar->addPermanentWidget(cropcancelBtn);
     connect(checkIso, SIGNAL(clicked()), this, SLOT(isomode()));
     connect(cropnowBtn, SIGNAL(clicked()), this, SLOT(transform()));
@@ -650,7 +644,7 @@ ResizeDialog:: ratioTextChanged()
 //                         Simple DeWarping
 // ------------------------------------------------------------------- |
 
-float calcArea(QPolygon p)
+float calcArea(QPolygonF p)
 {
     int i, n = p.count();
     float area = 0.0f;
@@ -665,6 +659,24 @@ float calcArea(QPolygon p)
         area = (area < 0) ? -area : area;
     }
     return area;
+}
+
+float InterpolateLagrangePolynomial (float x, QPolygonF p)
+{
+    int i, j, n = p.count();
+    float basics_pol, lagrange_pol = 0.0f;
+
+    for (i = 0; i < n; i++)
+    {
+        basics_pol = 1.0f;
+        for (j = 0; j < n; j++)
+        {
+            if (j != i)
+                basics_pol *= (x - p[j].x())/(p[i].x() - p[j].x());     
+        }
+        lagrange_pol += basics_pol * p[i].y();
+    }
+    return lagrange_pol;
 }
 
 int SelectChannelPixel(QRgb pix, int channel)
@@ -688,7 +700,7 @@ int SelectChannelPixel(QRgb pix, int channel)
     return value;
 }
 
-QRgb InterpolateCubic (QImage img, float y, int x)
+QRgb InterpolateCubicH (QImage img, float y, int x)
 {
     int i, d, dn, yi, yf;
     float d0, d2, d3, a0, a1, a2, a3;
@@ -736,6 +748,7 @@ DeWarping(Canvas *canvas, QStatusBar *statusbar, int count) : QObject(canvas),
 {
     int i, n = count, dxt, xt, yth, ytd;
     mouse_pressed = false;
+    flagrange = false;
     canvas->drag_to_scroll = false;
     pixmap = canvas->pixmap()->copy();
     scaleX = float(pixmap.width())/canvas->data->image.width();
@@ -744,39 +757,42 @@ DeWarping(Canvas *canvas, QStatusBar *statusbar, int count) : QObject(canvas),
     xt = dxt;
     ytd = (pixmap.height() - 1) / 4;
     yth = ytd + ytd + ytd;
-    lnh << QPoint(0, 0);
-    lnht << QPoint(0, 0);
-    lnd << QPoint(0, 0);
-    lndt << QPoint(0, 0);
-    lnh << QPoint(0, yth);
-    lnht << QPoint(0, yth);
-    lnd << QPoint(0, ytd);
-    lndt << QPoint(0, ytd);
+    lnh << QPointF(0, 0);
+    lnht << QPointF(0, 0);
+    lnd << QPointF(0, 0);
+    lndt << QPointF(0, 0);
+    lnh << QPointF(0, yth);
+    lnht << QPointF(0, yth);
+    lnd << QPointF(0, ytd);
+    lndt << QPointF(0, ytd);
     for (i = 0; i < n; i++)
     {
-        lnh << QPoint(xt, yth);
-        lnht << QPoint(xt, yth);
-        lnd << QPoint(xt, ytd);
-        lndt << QPoint(xt, ytd);
+        lnh << QPointF(xt, yth);
+        lnht << QPointF(xt, yth);
+        lnd << QPointF(xt, ytd);
+        lndt << QPointF(xt, ytd);
         xt += dxt;
     }
-    lnh << QPoint(pixmap.width(), yth);
-    lnht << QPoint(pixmap.width(), yth);
-    lnd << QPoint(pixmap.width(), ytd);
-    lndt << QPoint(pixmap.width(), ytd);
-    lnh << QPoint(pixmap.width(), 0);
-    lnht << QPoint(pixmap.width(), 0);
-    lnd << QPoint(pixmap.width(), 0);
-    lndt << QPoint(pixmap.width(), 0);
+    lnh << QPointF(pixmap.width(), yth);
+    lnht << QPointF(pixmap.width(), yth);
+    lnd << QPointF(pixmap.width(), ytd);
+    lndt << QPointF(pixmap.width(), ytd);
+    lnh << QPointF(pixmap.width(), 0);
+    lnht << QPointF(pixmap.width(), 0);
+    lnd << QPointF(pixmap.width(), 0);
+    lndt << QPointF(pixmap.width(), 0);
     // add buttons
+    LagrangeCheck = new QCheckBox("Lagrange?", statusbar);
+    statusbar->addPermanentWidget(LagrangeCheck);
     cropnowBtn = new QPushButton("DeWarp Now", statusbar);
     statusbar->addPermanentWidget(cropnowBtn);
     cropcancelBtn = new QPushButton("Cancel", statusbar);
     statusbar->addPermanentWidget(cropcancelBtn);
+    connect(LagrangeCheck, SIGNAL(clicked()), this, SLOT(LagrangeMode()));
     connect(cropnowBtn, SIGNAL(clicked()), this, SLOT(transform()));
     connect(cropcancelBtn, SIGNAL(clicked()), this, SLOT(finish()));
-    crop_widgets << cropnowBtn << cropcancelBtn;
-    statusbar->showMessage("Drag corners to fit edges around tilted image/document");
+    crop_widgets << LagrangeCheck << cropnowBtn << cropcancelBtn;
+    statusbar->showMessage("Set node for high and down contors image/document");
     drawDeWarpLine();
 }
 
@@ -792,9 +808,9 @@ DeWarping:: onMousePress(QPoint pos)
     n = lnht.count();
     for (i = 2; i < n - 2; i++)
     {
-        if (QRect((lnht[i] + QPoint(-r, -r)), QSize(r + r, r + r)).contains(clk_pos))
+        if (QRectF((lnht[i] + QPointF(-r, -r)), QSize(r + r, r + r)).contains(clk_pos))
             clk_area_h = i - 1;
-        if (QRect((lndt[i] + QPoint(-r, -r)), QSize(r + r, r + r)).contains(clk_pos))
+        if (QRectF((lndt[i] + QPointF(-r, -r)), QSize(r + r, r + r)).contains(clk_pos))
             clk_area_d = i - 1;
     }
 }
@@ -812,10 +828,10 @@ DeWarping:: onMouseMove(QPoint pos)
 {
     if (not mouse_pressed) return;
     int clk_area, n = lnht.count();
-    QPoint moved = pos - clk_pos;
-    QPoint null_pt = QPoint(-1, -1);
-    QPoint last_pt = QPoint(pixmap.width(), pixmap.height());
-    QPoint new_pt, lnhc, lndc, lnhp, lndp, lnhn, lndn;
+    QPointF moved = pos - clk_pos;
+    QPointF null_pt = QPointF(-1, -1);
+    QPointF last_pt = QPointF(pixmap.width(), pixmap.height());
+    QPointF new_pt, lnhc, lndc, lnhp, lndp, lnhn, lndn;
     clk_area = (clk_area_h > 0) ? clk_area_h : clk_area_d;
     lnhc = (clk_area > 0) ? lnht[clk_area + 1] : null_pt;
     lndc = (clk_area > 0) ? lndt[clk_area + 1] : null_pt;
@@ -826,16 +842,16 @@ DeWarping:: onMouseMove(QPoint pos)
     if (clk_area_h > 0)
     {
         new_pt = lnhc + moved;
-        lnh[clk_area_h + 1] = QPoint(MIN(lnhn.x() - 1, MAX(lnhp.x() + 1, new_pt.x())), MIN(last_pt.y() - 1, MAX(lndc.y() + 1, new_pt.y())));
-        lnh[1] = QPoint(0, lnh[2].y());
-        lnh[n-2] = QPoint(pixmap.width(), lnh[n - 3].y());
+        lnh[clk_area_h + 1] = QPointF(MIN(lnhn.x() - 1, MAX(lnhp.x() + 1, new_pt.x())), MIN(last_pt.y() - 1, MAX(lndc.y() + 1, new_pt.y())));
+        lnh[1] = QPointF(0, lnh[2].y());
+        lnh[n-2] = QPointF(pixmap.width(), lnh[n - 3].y());
     }
     if (clk_area_d > 0)
     {
         new_pt = lndc + moved;
-        lnd[clk_area_d + 1] = QPoint(MIN(lndn.x() - 1, MAX(lndp.x() + 1, new_pt.x())), MIN(lnhc.y() - 1, MAX(0, new_pt.y())));
-        lnd[1] = QPoint(0, lnd[2].y());
-        lnd[n-2] = QPoint(pixmap.width(), lnd[n - 3].y());
+        lnd[clk_area_d + 1] = QPointF(MIN(lndn.x() - 1, MAX(lndp.x() + 1, new_pt.x())), MIN(lnhc.y() - 1, MAX(0, new_pt.y())));
+        lnd[1] = QPointF(0, lnd[2].y());
+        lnd[n-2] = QPointF(pixmap.width(), lnd[n - 3].y());
     }
     drawDeWarpLine();
 }
@@ -868,10 +884,17 @@ DeWarping:: drawDeWarpLine()
 }
 
 void
+DeWarping:: LagrangeMode()
+{
+    flagrange = !flagrange;
+}
+
+void
 DeWarping:: transform()
 {
-    int i, n, y, x, w, h, ih, id;
+    int i, n, y, x, w, h, ih, id, ic;
     float yh, yd, dyh, dyd, yk0, yk1, yk2, oy;
+    QPolygonF lni;
     n = lnh.count();
     if (n > 4)
     {
@@ -881,8 +904,8 @@ DeWarping:: transform()
         h = img.height();
         for (i = 0; i < n; i++)
         {
-            lnh[i] = QPoint(lnh[i].x() / scaleX, lnh[i].y() / scaleY);
-            lnd[i] = QPoint(lnd[i].x() / scaleX, lnd[i].y() / scaleY);
+            lnh[i] = QPointF(lnh[i].x() / scaleX, lnh[i].y() / scaleY);
+            lnd[i] = QPointF(lnd[i].x() / scaleX, lnd[i].y() / scaleY);
         }
         ylnh /= scaleY;
         ylnd /= scaleY;
@@ -891,38 +914,63 @@ DeWarping:: transform()
         dyd = (float)(lnd[id].y() - lnd[id - 1].y()) / (lnd[id].x() - lnd[id - 1].x());
         for (x = 0; x < w; x++)
         {
-            if (x == lnh[ih].x())
+            if (x >= lnh[ih].x())
             {
                 ih++;
                 dyh = (float)(lnh[ih].y() - lnh[ih - 1].y()) / (lnh[ih].x() - lnh[ih - 1].x());
             }
-            if (x == lnd[id].x())
+            if (x >= lnd[id].x())
             {
                 id++;
                 dyd = (float)(lnd[id].y() - lnd[id - 1].y()) / (lnd[id].x() - lnd[id - 1].x());
             }
-            yh = (float)lnh[ih - 1].y() + dyh * (x - lnh[ih - 1].x());
-            yd = (float)lnd[id - 1].y() + dyd * (x - lnd[id - 1].x());
+            if (flagrange)
+            {
+                lni.clear();
+                ic = (ih < 3) ? 3 : (ih > n - 3) ? (n - 3) : ih;
+                for (i = ic - 2; i < ic + 2; i++)
+                    lni << lnh[i];
+                yh = InterpolateLagrangePolynomial (x, lni);
+                lni.clear();
+                ic = (id < 3) ? 3 : (id > n - 3) ? (n - 3) : id;
+                for (i = ic - 2; i < ic + 2; i++)
+                    lni << lnd[i];
+                yd = InterpolateLagrangePolynomial (x, lni);
+                yh = (yh < 1.0f) ? 1.0f : ((yh < h - 1) ? yh : (h - 1));
+                yd = (yd < 1.0f) ? 1.0f : ((yd < h - 1) ? yd : (h - 1));
+            }
+            else
+            {
+                yh = (float)lnh[ih - 1].y() + dyh * (x - lnh[ih - 1].x());
+                yd = (float)lnd[id - 1].y() + dyd * (x - lnd[id - 1].x());
+            }
+            if (yh < yd)
+            {
+                yh += yd;
+                yh *= 0.5f;
+                yh += 0.5f;
+                yd = yh - 1.0f;
+            }
             yk0 = yd / ylnd;
             yk1 = (yh - yd) / (ylnh - ylnd);
             yk2 = (h - yh) / (h - ylnh);
-            for (y = 0; y < (int)(ylnd + 0.5f); y++)
+            for (y = 0; y < (int)(ylnd + 1.0f); y++)
             {
                 row = (QRgb*)img.constScanLine(y);
                 oy = (float)y * yk0;
-                row[x] = InterpolateCubic (canvas->data->image, oy, x);
+                row[x] = InterpolateCubicH (canvas->data->image, oy, x);
             }
-            for (y = (int)(ylnd + 0.5f); y < (int)(ylnh + 0.5f); y++)
+            for (y = (int)(ylnd + 1.0f); y < (int)(ylnh + 1.0f); y++)
             {
                 row = (QRgb*)img.constScanLine(y);
                 oy = yd + (float)(y - ylnd) * yk1;
-                row[x] = InterpolateCubic (canvas->data->image, oy, x);
+                row[x] = InterpolateCubicH (canvas->data->image, oy, x);
             }
-            for (y = (int)(ylnh + 0.5f); y < h; y++)
+            for (y = (int)(ylnh + 1.0f); y < h; y++)
             {
                 row = (QRgb*)img.constScanLine(y);
                 oy = yh + (float)(y - ylnh) * yk2;
-                row[x] = InterpolateCubic (canvas->data->image, oy, x);
+                row[x] = InterpolateCubicH (canvas->data->image, oy, x);
             }
         }
         canvas->data->image = img;

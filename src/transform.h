@@ -4,6 +4,12 @@
 #include <QStatusBar>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
+#include <QSettings>
+#include <QPainter>
+#include <QPushButton>
+#include <QMenu>
+#include <QRect>
+#include <cmath>
 
 typedef enum {
     NO_RATIO,
@@ -19,6 +25,13 @@ public:
     Crop(Canvas *canvas, QStatusBar *statusbar);
     Canvas *canvas;
     QStatusBar *statusbar;
+    QPushButton *setRatioBtn;
+    QMenu *ratioMenu;
+    QActionGroup *ratioActions;
+    QAction *action1, *action2, *action3, *action4, *action5, *action6, *action7;
+    QWidget *spacer;
+    QPushButton *cropnowBtn, *cropcancelBtn;
+    
 private:
     QPixmap pixmap;
     bool mouse_pressed;
@@ -46,17 +59,21 @@ signals:
 class CropRatioDialog : public QDialog
 {
 public:
+    QDoubleSpinBox *widthSpin, *heightSpin;
+    QGridLayout *layout;
+    QLabel *label1;
+    QDialogButtonBox *btnBox;
     CropRatioDialog(QWidget *parent, double w, double h);
-    QDoubleSpinBox *widthSpin;
-    QDoubleSpinBox *heightSpin;
 };
 
 class CropResolutionDialog : public QDialog
 {
 public:
+    QSpinBox *widthSpin, *heightSpin;
+    QGridLayout *layout;
+    QLabel *label1, *label2;
+    QDialogButtonBox *btnBox;
     CropResolutionDialog(QWidget *parent, int img_w, int img_h);
-    QSpinBox *widthSpin;
-    QSpinBox *heightSpin;
 };
 // _____________________________________________________________________
 // perspective transform manager
@@ -67,6 +84,8 @@ class PerspectiveTransform : public QObject
 public:
     PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar);
     Canvas *canvas;
+    QCheckBox *checkIso;
+    QPushButton *cropnowBtn, *cropcancelBtn;
     QStatusBar *statusbar;
 private:
     QPixmap pixmap;
@@ -119,11 +138,12 @@ public:
     DeWarping(Canvas *canvas, QStatusBar *statusbar, int count);
     Canvas *canvas;
     QStatusBar *statusbar;
+    QCheckBox *LagrangeCheck;
     QPushButton *cropnowBtn, *cropcancelBtn;
 private:
     QPixmap pixmap;
-    bool mouse_pressed;
-    QPolygon lnht, lnh, lndt, lnd;
+    bool mouse_pressed, flagrange;
+    QPolygonF lnht, lnh, lndt, lnd;
     QPoint clk_pos;
     int clk_area_h, clk_area_d;
     float scaleX, scaleY, areah, aread, ylnh, ylnd;
@@ -133,6 +153,7 @@ private slots:
     void onMousePress(QPoint pos);
     void onMouseRelease(QPoint pos);
     void onMouseMove(QPoint pos);
+    void LagrangeMode();
     void transform();
     void finish();
 signals:

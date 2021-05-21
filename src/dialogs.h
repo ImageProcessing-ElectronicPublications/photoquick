@@ -17,9 +17,12 @@ class QualityDialog : public QDialog
 public:
     QualityDialog(QWidget *parent, QImage &img);
     QImage image;
+    QLabel *qualityLabel, *sizeLabel;
     QSpinBox *qualitySpin;
-    QLabel *sizeLabel;
+    QCheckBox *showSizeCheck;
+    QDialogButtonBox *btnBox;
     QTimer *timer;
+    QGridLayout *layout;
 public slots:
     void checkFileSize();
     void toggleCheckSize(bool checked);
@@ -29,8 +32,12 @@ public slots:
 class PaperSizeDialog : public QDialog
 {
 public:
+    QVBoxLayout *vLayout;
+    QLabel *label;
+    QStringList items;
     QComboBox *combo;
     QCheckBox *landscape;
+    QDialogButtonBox *btnBox;
     PaperSizeDialog(QWidget *parent, bool landscapeMode);
 };
 
@@ -38,8 +45,12 @@ public:
 class ExpandBorderDialog : public QDialog
 {
 public:
+    QVBoxLayout *vLayout;
+    QLabel *label, *label2;
     QComboBox *combo;
+    QStringList items;
     QSpinBox *widthSpin;
+    QDialogButtonBox *btnBox;
     ExpandBorderDialog(QWidget *parent, int border_w);
 };
 
@@ -72,10 +83,12 @@ public:
     float main=20.0;
     float edge=0;
     float zoom=10.0;
+    QLabel *label0, *label1, *label2; 
     QDoubleSpinBox *mainSpin;
     QDoubleSpinBox *edgeSpin;
     QDoubleSpinBox *zoomSpin;
-
+    QDialogButtonBox *btnBox;
+    QGridLayout *layout;
     LensDialog(QLabel *parent, QImage img, float scale);
     void run();
 };
@@ -85,8 +98,10 @@ class ThresholdDialog : public PreviewDialog
 {
 public:
     int thresh;
+    QLabel *label0;
     QSpinBox *thresholdSpin;
-
+    QDialogButtonBox *btnBox;
+    QVBoxLayout *layout;
     ThresholdDialog(QLabel *parent, QImage img, float scale);
     void run();
 };
@@ -96,8 +111,10 @@ class GammaDialog : public PreviewDialog
 {
 public:
     float gamma = 1.6;
+    QLabel *label0;
     QDoubleSpinBox *gammaSpin;
-
+    QDialogButtonBox *btnBox;
+    QVBoxLayout *layout;
     GammaDialog(QLabel *parent, QImage img, float scale);
     void run();
 };
