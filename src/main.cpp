@@ -772,6 +772,7 @@ Window:: resizeImage()
                 img = imgb.scaled(nwidth, nheight, Qt::IgnoreAspectRatio, tfmMode);
         }
         canvas->setImage(img);
+        canvas->showScaled();
     }
 }
 

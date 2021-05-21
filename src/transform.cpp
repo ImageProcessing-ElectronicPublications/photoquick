@@ -222,7 +222,7 @@ Crop:: crop()
         h = round((btmright.y()-topleft.y()+1)/scaleY);
     }
     QImage img = canvas->data->image.copy(round(topleft.x()/scaleX), round(topleft.y()/scaleY), w, h);
-    canvas->data->image = img;
+    canvas->data->image = img.copy();
     finish();
 }
 
@@ -510,7 +510,7 @@ PerspectiveTransform:: transform()
         QTransform trueMtx = QImage::trueMatrix(tfm,canvas->data->image.width(),canvas->data->image.height());
         if (fisometric)
         {
-            canvas->data->image = img;
+            canvas->data->image = img.copy();
         }
         else
         {
@@ -973,7 +973,7 @@ DeWarping:: transform()
                 row[x] = InterpolateCubicH (canvas->data->image, oy, x);
             }
         }
-        canvas->data->image = img;
+        canvas->data->image = img.copy();
     }
     finish();
 }
