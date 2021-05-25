@@ -6,6 +6,9 @@
 #include <QImage>
 #include <QWidget>
 
+// clamp an integer in 0-255 range
+#define Clamp(a) ((a)&(~0xff) ? (uchar)((~a)>>31) : (a))
+
 typedef struct {
     QImage image;
     QString filename;

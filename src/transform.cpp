@@ -60,6 +60,7 @@ Crop:: Crop(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
 {
     mouse_pressed = false;
     canvas->drag_to_scroll = false;
+    clk_radius = 60;
     pixmap = canvas->pixmap()->copy();
     scaleX = float(pixmap.width())/canvas->data->image.width();
     scaleY = float(pixmap.height())/canvas->data->image.height();
@@ -115,12 +116,13 @@ Crop:: Crop(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
 void
 Crop:: onMousePress(QPoint pos)
 {
+    int r = clk_radius;
     clk_pos = pos;
     mouse_pressed = true;
     // Determine which position is clicked
-    if (QRect(topleft, QSize(60, 60)).contains(clk_pos))
+    if (QRect(topleft, QSize(r, r)).contains(clk_pos))
         clk_area = 1;   // Topleft is clicked
-    else if (QRect(btmright, QSize(-60, -60)).contains(clk_pos))
+    else if (QRect(btmright, QSize(-r, -r)).contains(clk_pos))
         clk_area = 2;   // bottom right corner clicked
     else if (QRect(topleft, btmright).contains(clk_pos)) // clicked inside cropbox
         clk_area = 3;   // inside cropbox
@@ -186,17 +188,18 @@ Crop:: onMouseMove(QPoint pos)
 void
 Crop:: drawCropBox()
 {
+    int r1 = clk_radius - 1, r3 = clk_radius - 3;
     QPixmap pm = pixmap.copy();
     QPixmap pm_box = pm.copy(p1.x(), p1.y(), p2.x()-p1.x(), p2.y()-p1.y());
     QPainter painter(&pm);
     painter.fillRect(0,0, pm.width(), pm.height(), QColor(127,127,127,127));
     painter.drawPixmap(p1.x(), p1.y(), pm_box);
     painter.drawRect(p1.x(), p1.y(), p2.x()-p1.x(), p2.y()-p1.y());
-    painter.drawRect(p1.x(), p1.y(), 59, 59);
-    painter.drawRect(p2.x(), p2.y(), -59, -59);
+    painter.drawRect(p1.x(), p1.y(), r1, r1);
+    painter.drawRect(p2.x(), p2.y(), -r1, -r1);
     painter.setPen(Qt::white);
-    painter.drawRect(p1.x()+1, p1.y()+1, 57, 57);
-    painter.drawRect(p2.x()-1, p2.y()-1, -57, -57);
+    painter.drawRect(p1.x()+1, p1.y()+1, r3, r3);
+    painter.drawRect(p2.x()-1, p2.y()-1, -r3, -r3);
     painter.end();
     canvas->setPixmap(pm);
     QString text = "Resolution : %1x%2";
@@ -212,7 +215,7 @@ Crop:: drawCropBox()
 void
 Crop:: crop()
 {
-    int w,h;
+    int w, h;
     if (crop_mode==FIXED_RESOLUTION) {
         w = fixed_width;
         h = fixed_height;
@@ -365,6 +368,7 @@ PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
     mouse_pressed = false;
     fisometric = false;
     canvas->drag_to_scroll = false;
+    clk_radius = 60;
     pixmap = canvas->pixmap()->copy();
     scaleX = float(pixmap.width())/canvas->data->image.width();
     scaleY = float(pixmap.height())/canvas->data->image.height();
@@ -397,15 +401,16 @@ PerspectiveTransform(Canvas *canvas, QStatusBar *statusbar) : QObject(canvas),
 void
 PerspectiveTransform:: onMousePress(QPoint pos)
 {
-    int i, n, sx = 1, sy = 1;
+    int i, n, r, sx = 1, sy = 1;
     clk_pos = pos;
+    r = clk_radius;
     mouse_pressed = true;
     // Determine which position is clicked
     clk_area = 0;
     n = pt.count();
     for (i = 0; i < n; i++)
     {
-        if (QRect(pt[i], QSize(sx * 60, sy * 60)).contains(clk_pos))
+        if (QRect(pt[i], QSize(sx * r, sy * r)).contains(clk_pos))
             clk_area = i + 1;
         sx = sx - sy;
         sy += sx; //  1, -1, -1,  1
@@ -439,12 +444,14 @@ void
 PerspectiveTransform:: drawCropBox()
 {
     float start, span;
-    int i, n, j0, j1, j2, j3;
+    int i, n, r, r2, j0, j1, j2, j3;
     QPixmap pm = pixmap.copy();
     QPainter painter(&pm);
     QPolygonF polygon;
     polygon << p[0] << p[1] << p[2] << p[3];
     painter.drawPolygon(polygon);
+    r = clk_radius;
+    r2 = r / 2;
     n = p.count();
     if (n == 4)
     {
@@ -456,7 +463,7 @@ PerspectiveTransform:: drawCropBox()
             j2 = (j1 + 2) % 4;
 
             calcArc(p[j0], p[j1], p[j2], p[j3], start, span);
-            painter.drawArc(p[i].x() - 30, p[i].y() - 30, 60, 60, 16 * start, 16 * span);
+            painter.drawArc(p[i].x() - r2, p[i].y() - r2, r, r, 16 * start, 16 * span);
         }
         painter.setPen(Qt::white);
         polygon.clear();
@@ -749,6 +756,7 @@ DeWarping(Canvas *canvas, QStatusBar *statusbar, int count) : QObject(canvas),
     int i, n = count, dxt, xt, yth, ytd;
     mouse_pressed = false;
     flagrange = false;
+    clk_radius = 10;
     canvas->drag_to_scroll = false;
     pixmap = canvas->pixmap()->copy();
     scaleX = float(pixmap.width())/canvas->data->image.width();
@@ -799,12 +807,13 @@ DeWarping(Canvas *canvas, QStatusBar *statusbar, int count) : QObject(canvas),
 void
 DeWarping:: onMousePress(QPoint pos)
 {
-    int i, n, r = 15;
+    int i, n, r;
     clk_pos = pos;
     mouse_pressed = true;
     // Determine which position is clicked
     clk_area_h = 0;
     clk_area_d = 0;
+    r = clk_radius;
     n = lnht.count();
     for (i = 2; i < n - 2; i++)
     {
@@ -859,21 +868,38 @@ DeWarping:: onMouseMove(QPoint pos)
 void
 DeWarping:: drawDeWarpLine()
 {
-    int i, n, r = 15;
+    int i, n, r, r2, rs2;
     float area;
     QPixmap pm = pixmap.copy();
     QPainter painter(&pm);
     n = lnh.count();
+    r = clk_radius;
+    r2 = r - 2;
+    rs2 = r * 0.707107f;
     area = calcArea(lnh);
     ylnh = area / pixmap.width();
     area = calcArea(lnd);
     ylnd = area / pixmap.width();
+    painter.setPen(Qt::gray);
+    for (i = 2; i < n - 2; i++)
+    {
+        painter.drawLine(lnh[i].x() - rs2, lnh[i].y() - rs2, lnh[i].x() + rs2, lnh[i].y() + rs2);
+        painter.drawLine(lnh[i].x() - rs2, lnh[i].y() + rs2, lnh[i].x() + rs2, lnh[i].y() - rs2);
+        painter.drawLine(lnd[i].x() - rs2, lnd[i].y() - rs2, lnd[i].x() + rs2, lnd[i].y() + rs2);
+        painter.drawLine(lnd[i].x() - rs2, lnd[i].y() + rs2, lnd[i].x() + rs2, lnd[i].y() - rs2);
+    }
+    painter.setPen(Qt::white);
+    for (i = 2; i < n - 2; i++)
+    {
+        painter.drawArc(lnh[i].x() - r2, lnh[i].y() - r2, r2 + r2, r2 + r2, 0, 5760.0f);
+        painter.drawArc(lnd[i].x() - r2, lnd[i].y() - r2, r2 + r2, r2 + r2, 0, 5760.0f);
+    }
+    painter.setPen(Qt::black);
     for (i = 2; i < n - 2; i++)
     {
         painter.drawArc(lnh[i].x() - r, lnh[i].y() - r, r + r, r + r, 0, 5760.0f);
         painter.drawArc(lnd[i].x() - r, lnd[i].y() - r, r + r, r + r, 0, 5760.0f);
     }
-//    painter.setPen(Qt::white);
     painter.drawPolygon(lnh);
     painter.drawPolygon(lnd);
     painter.setPen(Qt::red);

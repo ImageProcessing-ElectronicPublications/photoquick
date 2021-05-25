@@ -38,7 +38,7 @@ private:
     QPoint topleft, btmright;   // corner pos at the time of mouse click
     QPoint p1, p2;              // corner pos while mouse moves
     QPoint clk_pos;
-    int clk_area;
+    int clk_area, clk_radius;
     float scaleX, scaleY; // using two scales give better accuracy on scaled canvas
     CropMode crop_mode;
     int fixed_width, fixed_height; // in FIXED_RESOLUTION mode
@@ -92,7 +92,7 @@ private:
     bool mouse_pressed, fisometric;
     QPolygon pt, p;
     QPoint clk_pos;
-    int clk_area;
+    int clk_area, clk_radius;
     float scaleX, scaleY;
     QList<QWidget *> crop_widgets;
     void drawCropBox();
@@ -145,7 +145,7 @@ private:
     bool mouse_pressed, flagrange;
     QPolygonF lnht, lnh, lndt, lnd;
     QPoint clk_pos;
-    int clk_area_h, clk_area_d;
+    int clk_area_h, clk_area_d, clk_radius;
     float scaleX, scaleY, areah, aread, ylnh, ylnd;
     QList<QWidget *> crop_widgets;
     void drawDeWarpLine();

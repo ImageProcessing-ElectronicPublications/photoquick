@@ -54,8 +54,13 @@ QImage loadImage(QString fileName)
     else if (!img.hasAlphaChannel() and img.format()!=QImage::Format_RGB32)
         img = img.convertToFormat(QImage::Format_RGB32);
     // Get jpg orientation
+/*
+* FIX long name: Debian Wheezy
+* 
     char *filename = fileName.toUtf8().data();
     FILE *f = fopen(filename, "rb");
+*/
+    FILE *f = fopen(fileName.toUtf8().data(), "rb");
     int orientation = getOrientation(f);
     fclose(f);
     // rotate if required
