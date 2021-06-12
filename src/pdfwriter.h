@@ -4,6 +4,10 @@
 #include <sstream>
 #include <list>
 #include <map>
+#include <clocale>
+
+#ifndef __PHOTOQUIK_PDFWRITER
+#define __PHOTOQUIK_PDFWRITER
 
 class PdfDict
 {
@@ -74,3 +78,5 @@ std::string getPngIdat(char *rawdata, int rawdata_size);
 std::string readFile(std::string filename);
 
 std::string imgMatrix(float x, float y, float w, float h, int rotation);
+
+#endif /* __PHOTOQUIK_PDFWRITER */

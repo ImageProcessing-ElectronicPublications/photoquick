@@ -1,11 +1,21 @@
 #pragma once
 /* Intelligent Scissor and Manual eraser for background removal */
 
-#include "ui_iscissor_dialog.h"
-#include "canvas.h"
+#include <cmath>
+#include <vector>
 #include <QPainter>
 #include <QTimer>
-#include <vector>
+#include <QColorDialog>
+#include <QButtonGroup>
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include "ui_iscissor_dialog.h"
+#include "canvas.h"
+#include "common.h"
+#include "filters.h"
+
+#ifndef __PHOTOQUIK_ISCISSOR
+#define __PHOTOQUIK_ISCISSOR
 
 class GradMap
 {
@@ -121,3 +131,4 @@ signals:
     void bgColorSelected(int, QRgb);
 };
 
+#endif /* __PHOTOQUIK_ISCISSOR */

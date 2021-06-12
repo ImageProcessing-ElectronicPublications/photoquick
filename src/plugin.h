@@ -6,6 +6,12 @@
 #include <QImage>
 #include <QWidget>
 
+#ifndef __PHOTOQUIK_PLUGIN
+	#define __PHOTOQUIK_PLUGIN
+
+// clamp an integer in 0-255 range
+#define Clamp(a) ((a)&(~0xff) ? (uchar)((~a)>>31) : (a))
+
 typedef struct {
     QImage image;
     QString filename;
@@ -68,3 +74,5 @@ signals:
 #define Plugin_iid "photoquick.Plugin/1.0"
 
 Q_DECLARE_INTERFACE(Plugin, Plugin_iid);
+
+#endif /* __PHOTOQUIK_PLUGIN */

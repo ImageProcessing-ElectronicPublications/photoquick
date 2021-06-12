@@ -1,8 +1,25 @@
 #pragma once
 /* Inpainting Algorithm to Heal damaged photo or erase object */
 
-#include "canvas.h"
+#include <cmath>
+#include <chrono>
 #include <QList>
+#include "canvas.h"
+#include "common.h"
+
+#ifndef __PHOTOQUIK_INPAINT
+#define __PHOTOQUIK_INPAINT
+
+#define TIME_START auto start = std::chrono::steady_clock::now();
+#define TIME_STOP auto end = std::chrono::steady_clock::now();\
+    double elapse = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();\
+    qDebug() << "Execution Time :" << elapse;
+
+//Explanation -> https://github.com/YuanTingHsieh/Image_Completion
+
+
+// the maximum value returned by distanceMaskedImage()
+#define DSCALE 65535
 
 class MaskedImage
 {
@@ -123,3 +140,5 @@ public slots:
     void onMouseRelease(QPoint pos);
     void onMouseMove(QPoint pos);
 };
+
+#endif /* __PHOTOQUIK_INPAINT */

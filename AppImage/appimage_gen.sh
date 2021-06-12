@@ -20,8 +20,8 @@ cd AppDir
 
 # copy executable, icon and desktop file
 cp ../../src/photoquick usr/bin
-cp ../../data/photoquick.png usr/share/icons
-cp ../../data/photoquick.desktop usr/share/applications/com.ksharindam.photoquick.desktop
+cp ../../data/desktop/icons/photoquick.png usr/share/icons
+cp ../../data/desktop/applications/photoquick.desktop usr/share/applications/com.ksharindam.photoquick.desktop
 cp ../com.ksharindam.photoquick.appdata.xml usr/share/metainfo
 
 

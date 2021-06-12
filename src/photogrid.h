@@ -1,12 +1,29 @@
 #pragma once
 
+#include <cmath>
+#include <QLabel>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QPen>
+#include <QDesktopWidget>
+#include <QSettings>
+#include <QBuffer>
+#include <QMimeData>
+#include <QUrl>
 #include "ui_photogrid_dialog.h"
 #include "ui_gridsetup_dialog.h"
 #include "ui_collage_dialog.h"
 #include "ui_collagesetup_dialog.h"
-#include <QLabel>
-#include <QMouseEvent>
-#include <QPainter>
+#include "common.h"
+#include "pdfwriter.h"
+
+#ifndef __PHOTOQUIK_PHOTOGRID
+#define __PHOTOQUIK_PHOTOGRID
+
+#define UNIT_NAMES   {"in", "cm"}
+#define UNIT_FACTORS {1, 1/2.54 }
 
 // Thumbnail class holds a photo
 class Thumbnail : public QLabel
@@ -193,3 +210,5 @@ public slots:
     void selectFile();
     void toggleUsePageSize(const QString&);
 };
+
+#endif /* __PHOTOQUIK_PHOTOGRID */

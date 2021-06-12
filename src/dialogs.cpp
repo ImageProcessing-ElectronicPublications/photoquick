@@ -1,10 +1,5 @@
 // this file is part of photoquick program which is GPLv3 licensed
 #include "dialogs.h"
-#include "common.h"
-#include "filters.h"
-#include <QDialogButtonBox>
-#include <QGridLayout>
-#include <cmath>
 
 // ------------ Dialog to set JPG image quality for saving ------------
 
@@ -14,17 +9,17 @@ QualityDialog:: QualityDialog(QWidget *parent, QImage &img) : QDialog(parent), i
     timer = new QTimer(this);
     timer->setSingleShot(true);
     timer->setInterval(800);
-    QLabel *qualityLabel = new QLabel("Compression Level :", this);
+    qualityLabel = new QLabel("Compression Level :", this);
     qualitySpin = new QSpinBox(this);
     qualitySpin->setAlignment(Qt::AlignHCenter);
     qualitySpin->setSuffix(" %");
     qualitySpin->setRange(10,100);
     qualitySpin->setValue(75);
-    QCheckBox *showSizeCheck = new QCheckBox("Show File Size", this);
+    showSizeCheck = new QCheckBox("Show File Size", this);
     sizeLabel = new QLabel("Size : Calculating...", this);
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Save|QDialogButtonBox::Cancel,
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Save|QDialogButtonBox::Cancel,
                                                     Qt::Horizontal, this);
-    QGridLayout *layout = new QGridLayout(this);
+    layout = new QGridLayout(this);
     layout->addWidget(qualityLabel);
     layout->addWidget(qualitySpin);
     layout->addWidget(showSizeCheck);
@@ -68,14 +63,14 @@ PaperSizeDialog:: PaperSizeDialog(QWidget *parent, bool landscapeMode) : QDialog
 {
     this->resize(250, 120);
     this->setWindowTitle("Paper Size");
-    QVBoxLayout *vLayout = new QVBoxLayout(this);
-    QLabel *label = new QLabel("Select Paper Size :", this);
+    vLayout = new QVBoxLayout(this);
+    label = new QLabel("Select Paper Size :", this);
     combo = new QComboBox(this);
-    QStringList items = { "Automatic", "A4", "A5", "100 dpi", "300 dpi", "Other dpi" };
+    items = { "Automatic", "A4", "A5", "100 dpi", "300 dpi", "Other dpi" };
     combo->addItems(items);
     landscape = new QCheckBox("Landscape", this);
     landscape->setChecked(landscapeMode);
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, Qt::Horizontal, this);
     vLayout->addWidget(label);
     vLayout->addWidget(combo);
     vLayout->addWidget(landscape);
@@ -91,18 +86,18 @@ ExpandBorderDialog:: ExpandBorderDialog(QWidget *parent, int border_w) : QDialog
 {
     this->resize(250, 120);
     this->setWindowTitle("Expand Image Border");
-    QVBoxLayout *vLayout = new QVBoxLayout(this);
-    QLabel *label = new QLabel("Expand each side by :", this);
+    vLayout = new QVBoxLayout(this);
+    label = new QLabel("Expand each side by :", this);
     widthSpin = new QSpinBox(this);
     widthSpin->setAlignment(Qt::AlignHCenter);
     widthSpin->setSuffix(" px");
     widthSpin->setRange(1, border_w*5);
     widthSpin->setValue(border_w);
-    QLabel *label2 = new QLabel("Set Border Type :", this);
+    label2 = new QLabel("Set Border Type :", this);
     combo = new QComboBox(this);
-    QStringList items = {"Clone Edges", "White Color", "Black Color", "Other Color"};
+    items = {"Clone Edges", "White Color", "Black Color", "Other Color"};
     combo->addItems(items);
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, Qt::Horizontal, this);
     vLayout->addWidget(label);
     vLayout->addWidget(widthSpin);
     vLayout->addWidget(label2);
@@ -150,9 +145,9 @@ PreviewDialog:: preview(QImage img)
 LensDialog:: LensDialog(QLabel *canvas, QImage img, float scale) : PreviewDialog(canvas,img,scale)
 {
     setWindowTitle("Lens Distortion");
-    QLabel *label0 = new QLabel("Main :", this);
-    QLabel *label1 = new QLabel("Edge :", this);
-    QLabel *label2 = new QLabel("Zoom :", this);
+    label0 = new QLabel("Main :", this);
+    label1 = new QLabel("Edge :", this);
+    label2 = new QLabel("Zoom :", this);
     mainSpin = new QDoubleSpinBox(this);
     mainSpin->setDecimals(1);
     mainSpin->setRange(-100, 100);
@@ -165,9 +160,9 @@ LensDialog:: LensDialog(QLabel *canvas, QImage img, float scale) : PreviewDialog
     zoomSpin->setDecimals(1);
     zoomSpin->setRange(-100, 100);
     zoomSpin->setValue(zoom);
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|
-                                    QDialogButtonBox::Cancel, Qt::Horizontal, this);
-    QGridLayout *layout = new QGridLayout(this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|
+                 QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    layout = new QGridLayout(this);
     layout->addWidget(label0, 0,0,1,1);
     layout->addWidget(label1, 1,0,1,1);
     layout->addWidget(label2, 2,0,1,1);
@@ -203,13 +198,13 @@ LensDialog:: run()
 ThresholdDialog:: ThresholdDialog(QLabel *canvas, QImage img, float scale) : PreviewDialog(canvas,img,scale)
 {
     setWindowTitle("Threshold Value");
-    QLabel *label0 = new QLabel("Enter threshold Value :", this);
+    label0 = new QLabel("Enter threshold Value :", this);
     thresholdSpin = new QSpinBox(this);
     thresholdSpin->setRange(1, 254);
     thresholdSpin->setValue( calcOtsuThresh(img) );
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok |
-                                    QDialogButtonBox::Cancel, Qt::Horizontal, this);
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok |
+                 QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    layout = new QVBoxLayout(this);
     layout->addWidget(label0);
     layout->addWidget(thresholdSpin);
     layout->addWidget(btnBox);
@@ -237,14 +232,14 @@ ThresholdDialog:: run()
 GammaDialog:: GammaDialog(QLabel *canvas, QImage img, float scale) : PreviewDialog(canvas,img,scale)
 {
     setWindowTitle("Apply Gamma");
-    QLabel *label0 = new QLabel("Enter the value of Gamma :", this);
+    label0 = new QLabel("Enter the value of Gamma :", this);
     gammaSpin = new QDoubleSpinBox(this);
     gammaSpin->setSingleStep(0.1);
     gammaSpin->setRange(0.1, 10.0);
     gammaSpin->setValue( gamma );
-    QDialogButtonBox *btnBox = new QDialogButtonBox(QDialogButtonBox::Ok |
-                                    QDialogButtonBox::Cancel, Qt::Horizontal, this);
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok |
+                 QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    layout = new QVBoxLayout(this);
     layout->addWidget(label0);
     layout->addWidget(gammaSpin);
     layout->addWidget(btnBox);
@@ -264,4 +259,22 @@ GammaDialog:: run()
     QImage img = image.copy();
     applyGamma(img, gamma);
     preview(img);
+}
+
+DeWarpDialog:: DeWarpDialog(QWidget *parent) : QDialog(parent)
+{
+    this->resize(150, 120);
+    this->setWindowTitle("Dewarp Image");
+    vLayout = new QVBoxLayout(this);
+    countLabel = new QLabel("Count nodes :", this);
+    countSpin = new QSpinBox(this);
+    countSpin->setAlignment(Qt::AlignHCenter);
+    countSpin->setRange(2, 50);
+    countSpin->setValue(5);
+    btnBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
+    vLayout->addWidget(countLabel);
+    vLayout->addWidget(countSpin);
+    vLayout->addWidget(btnBox);
+    connect(btnBox, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(btnBox, SIGNAL(rejected()), this, SLOT(reject()));
 }

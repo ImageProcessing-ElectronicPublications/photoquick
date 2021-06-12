@@ -1,13 +1,20 @@
 #pragma once
 /* Image Label Object to display the image. */
 #include "plugin.h"
+#include <cmath>
+#include <QDebug>
 #include <QLabel>
 #include <QMovie>
 #include <QMouseEvent>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QCursor>
+#include <QSizePolicy>
+#include <QTransform>
+#include <QPainter>
 
+#ifndef __PHOTOQUIK_CANVAS
+#define __PHOTOQUIK_CANVAS
 
 //This is the widget responsible for displaying image
 class Canvas : public QLabel
@@ -72,3 +79,5 @@ typedef struct {
     int y;
     QImage image;// this image is replaced by new image at pos (x,y)
 } HistoryItem;
+
+#endif /* __PHOTOQUIK_CANVAS */

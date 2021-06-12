@@ -1,5 +1,22 @@
 #pragma once
+#include <cmath>
+#include <chrono>
 #include <QImage>
+#include <QPainter>
+#include "common.h"
+
+#ifndef __PHOTOQUIK_FILTERS
+#define __PHOTOQUIK_FILTERS
+
+// macros for measuring execution time
+#define TIME_START auto start = std::chrono::steady_clock::now();
+#define TIME_STOP auto end = std::chrono::steady_clock::now();\
+    double elapse = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();\
+    qDebug() << "Execution Time :" << elapse;
+
+#define PI 3.141593f
+#define SQR(x) ((x)*(x))
+
 
 // Convert image to grayscale
 void grayScale(QImage &img);
@@ -56,3 +73,7 @@ void vignette(QImage &img);
 void pencilSketch(QImage &img);
 
 QImage expandBorder(QImage img, int width);
+
+QImage reFilter(QImage imgre, QImage img0, float mult);
+
+#endif /* __PHOTOQUIK_FILTERS */

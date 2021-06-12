@@ -1,7 +1,32 @@
 #pragma once
+#include <cmath>
+#include <QTimer>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QColorDialog>
+#include <QMessageBox>
+#include <QFileInfo>
+#include <QPainter>
+#include <QDesktopWidget>
+#include <QSettings>
+#include <QMenu>
+#include <QRegExp>
+#include <QBuffer>
+#include <QImageWriter>
 #include "ui_mainwindow.h"
 #include "canvas.h"
-#include <QTimer>
+#include "common.h"
+#include "plugin.h"
+#include "dialogs.h"
+#include "transform.h"
+#include "photogrid.h"
+#include "inpaint.h"
+#include "iscissor.h"
+#include "filters.h"
+#include "pdfwriter.h"
+
+#ifndef __PHOTOQUIK_MAIN
+#define __PHOTOQUIK_MAIN
 
 typedef enum
 {
@@ -19,6 +44,7 @@ public:
     void openImage(QString filename);
     void saveImage(QString filename);
     void adjustWindowSize(bool animation=false);
+    QImage resizeImageBicub (QImage, unsigned, unsigned);
     //Variables declaration
     Canvas *canvas;
     ImageData data;
@@ -32,6 +58,7 @@ private:
     void disableButtons(ButtonType type, bool disable);
     void closeEvent(QCloseEvent *ev);
     void addMaskWidget();
+    void blurorbox(int method);
 public slots:
     void openFile();
     void overwrite();
@@ -43,8 +70,13 @@ public slots:
     void reloadImage();
     void resizeImage();
     void cropImage();
+    // tranform
     void mirror();
     void perspectiveTransform();
+    void deWarping();
+    void deOblique();
+    void lensDistort();
+    // decorate
     void addBorder();
     void expandImageBorder();
     void createPhotoGrid();
@@ -57,7 +89,9 @@ public slots:
     void toGrayScale();
     void applyThreshold();
     void adaptiveThresh();
+    void box();
     void blur();
+    void deblur();
     void sharpenImage();
     void reduceSpeckleNoise();
     void removeDust();
@@ -69,7 +103,6 @@ public slots:
     void vignetteFilter();
     void pencilSketchFilter();
     void grayWorldFilter();
-    void lensDistort();
     // info menu
     void imageInfo();
     void showAbout();
@@ -92,3 +125,5 @@ public slots:
 
 QString getNextFileName(QString current);
 QString getNewFileName(QString filename);
+
+#endif /* __PHOTOQUIK_MAIN */

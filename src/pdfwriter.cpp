@@ -1,5 +1,4 @@
 #include "pdfwriter.h"
-#include <clocale>
 
 PdfWriter:: PdfWriter()
 {

@@ -1,19 +1,6 @@
 /* This file is a part of photoquick program, which is GPLv3 licensed */
 
 #include "inpaint.h"
-#include "common.h"
-#include <cmath>
-#include <chrono>
-#define TIME_START auto start = std::chrono::steady_clock::now();
-#define TIME_STOP auto end = std::chrono::steady_clock::now();\
-    double elapse = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();\
-    qDebug() << "Execution Time :" << elapse;
-
-//Explanation -> https://github.com/YuanTingHsieh/Image_Completion
-
-
-// the maximum value returned by distanceMaskedImage()
-#define DSCALE 65535
 
 static double similarity[DSCALE+1];
 static int initSim = 0;
@@ -51,7 +38,6 @@ Inpaint:: Inpaint()
         srand((unsigned)time(0));
     }
 }
-
 
 QImage
 Inpaint:: inpaint(QImage input, QImage mask_img, int radius)
@@ -226,7 +212,6 @@ Inpaint:: ExpectationMaximization(int level)
     return newtarget;
 }
 
-
 // Expectation Step : vote for best estimations of each pixel
 void
 Inpaint:: ExpectationStep(NNF* nnf, int sourceToTarget, double** vote, MaskedImage* source, int upscale)
@@ -256,7 +241,7 @@ Inpaint:: ExpectationStep(NNF* nnf, int sourceToTarget, double** vote, MaskedIma
 
                     // get corresponding pixel in output patch
                     if (sourceToTarget)
-                    { xs=x+dx; ys=y+dy; xt=xp+dx; yt=yp+dy;}
+                    { xs=x+dx; ys=y+dy;    xt=xp+dx; yt=yp+dy;}
                     else
                     { xs=xp+dx; ys=yp+dy; xt=x+dx; yt=y+dy; }
 
@@ -291,7 +276,6 @@ void weightedCopy(MaskedImage* src, int xs, int ys, double** vote, int xd,int yd
     vote[yd][4*xd+3] += w;
 }
 
-
 // Maximization Step : Maximum likelihood of target pixel
 void MaximizationStep(MaskedImage* target, double** vote)
 {
@@ -313,7 +297,6 @@ void MaximizationStep(MaskedImage* target, double** vote)
         }
     }
 }
-
 
 /**
 * Nearest-Neighbor Field (see PatchMatch algorithm)
@@ -485,7 +468,6 @@ NNF:: ~NNF()
     }
 }
 
-
 // **************** Masked Image ******************
 
 uchar** allocMask(int w, int h)
@@ -501,7 +483,6 @@ uchar** allocMask(int w, int h)
         mask[i] = (ptr + w*i);
     return mask;
 }
-
 
 MaskedImage:: MaskedImage(int width, int height)
 {
@@ -552,7 +533,6 @@ MaskedImage:: ~MaskedImage()
     }
 }
 
-
 int
 MaskedImage:: getSample(int x, int y, int band)
 {
@@ -596,7 +576,6 @@ MaskedImage:: containsMasked(int x, int y, int S)
     return 0;
 }
 
-
 // return a copy of the image
 MaskedImage*
 MaskedImage:: copy()
@@ -605,7 +584,6 @@ MaskedImage:: copy()
     newimg->copyMaskFrom(mask);
     return newimg;
 }
-
 
 // return a downsampled image (factor 1/2)
 MaskedImage*
@@ -752,7 +730,6 @@ int distanceMaskedImage(MaskedImage *source,int xs,int ys, MaskedImage *target,i
     if (res < 0 || res > DSCALE) return DSCALE;
     return res;
 }
-
 
 // ---------------------------------------------------------------------
 //************************ Inpainting GUI *****************************-

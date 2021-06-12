@@ -1,10 +1,20 @@
 #pragma once
+#include <cmath>
 #include <QImage>
 #include <QSystemTrayIcon>
+#include <QTimer>
+#include <QEventLoop>
+#include <QFile>
+#include <QBuffer>
+#include <QTransform>
+#include <QIcon>
 #include <QDebug>
 
+#ifndef __PHOTOQUIK_COMMON
+#define __PHOTOQUIK_COMMON
+
 #define PROG_NAME       "PhotoQuick"
-#define PROG_VERSION    "4.4.2"
+#define PROG_VERSION    "4.4.3"
 #define COPYRIGHT_YEAR  "2017-2021"
 #define AUTHOR_NAME     "Arindam Chaudhuri"
 #define AUTHOR_EMAIL    "ksharindam@gmail.com"
@@ -71,3 +81,16 @@ inline bool isBigEndian()
 {
     int i=1; return ! *((char *)&i);
 }
+
+// transformation begin
+QPointF meanx2(QPolygonF p);
+QPointF stdevx2(QPolygonF p);
+void calcArc(QPointF center, QPointF from, QPointF to, QPointF through,
+                            float &start, float &span);
+float calcArea(QPolygonF p);
+float InterpolateLagrangePolynomial (float x, QPolygonF p);
+int SelectChannelPixel(QRgb pix, int channel);
+QRgb InterpolateBiCubic (QImage img, float y, float x);
+// transformation end
+
+#endif /* __PHOTOQUIK_COMMON */
