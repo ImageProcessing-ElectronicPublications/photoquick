@@ -14,7 +14,7 @@
 #define __PHOTOQUIK_COMMON
 
 #define PROG_NAME       "PhotoQuick"
-#define PROG_VERSION    "4.4.3"
+#define PROG_VERSION    "4.5.0"
 #define COPYRIGHT_YEAR  "2017-2021"
 #define AUTHOR_NAME     "Arindam Chaudhuri"
 #define AUTHOR_EMAIL    "ksharindam@gmail.com"

@@ -66,7 +66,7 @@ PaperSizeDialog:: PaperSizeDialog(QWidget *parent, bool landscapeMode) : QDialog
     vLayout = new QVBoxLayout(this);
     label = new QLabel("Select Paper Size :", this);
     combo = new QComboBox(this);
-    items = { "Automatic", "A4", "A5", "100 dpi", "300 dpi", "Other dpi" };
+    items += { "Automatic", "A4", "A5", "100 dpi", "300 dpi", "Other dpi" };
     combo->addItems(items);
     landscape = new QCheckBox("Landscape", this);
     landscape->setChecked(landscapeMode);
@@ -95,7 +95,7 @@ ExpandBorderDialog:: ExpandBorderDialog(QWidget *parent, int border_w) : QDialog
     widthSpin->setValue(border_w);
     label2 = new QLabel("Set Border Type :", this);
     combo = new QComboBox(this);
-    items = {"Clone Edges", "White Color", "Black Color", "Other Color"};
+    items += {"Clone Edges", "White Color", "Black Color", "Other Color"};
     combo->addItems(items);
     btnBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, Qt::Horizontal, this);
     vLayout->addWidget(label);

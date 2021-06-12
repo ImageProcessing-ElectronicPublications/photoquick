@@ -14,15 +14,13 @@ LIBDIR=lib/${MULTIARCH}
 mkdir -p AppDir/usr/bin
 mkdir -p AppDir/usr/share/applications
 mkdir -p AppDir/usr/share/icons
-mkdir -p AppDir/usr/share/metainfo
 
 cd AppDir
 
 # copy executable, icon and desktop file
 cp ../../src/photoquick usr/bin
 cp ../../data/desktop/icons/photoquick.png usr/share/icons
-cp ../../data/desktop/applications/photoquick.desktop usr/share/applications/com.ksharindam.photoquick.desktop
-cp ../com.ksharindam.photoquick.appdata.xml usr/share/metainfo
+cp ../../data/desktop/applications/photoquick.desktop usr/share/applications
 
 
 # copy plugins
